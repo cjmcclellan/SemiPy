@@ -1,6 +1,6 @@
 import numpy as np
 from physics.fundamental_constants import free_space_permittivity_F_div_cm, electron_charge_C
-from ..Devices.BaseDevice import BaseDevice
+from ..BaseDevice import BaseDevice
 from physics.helper import assert_value
 from physics.units import ureg
 from physics.value import Value
@@ -30,8 +30,8 @@ class Transistor(BaseDevice):
         self.length = length
 
         # publish properties
-        self._add_publish_property('width', self.width)
-        self._add_publish_property('length', self.length)
+        self._add_publish_property('width')
+        self._add_publish_property('length')
         # self.publish_prop = {'Width': lambda: self.width,
         #                      'length': lambda: self.length}
 
@@ -71,18 +71,18 @@ class FET(Transistor):
         self._Ion_1e13_Vd = None
 
         # add to the publish properties
-        self.publish_prop['mobility'] = lambda: self.mobility
-        self.publish_prop['dielectric constant'] = lambda: self.dielectric_const
-        self.publish_prop['Tox'] = lambda: self.tox
-        self.publish_prop['Cox'] = lambda: self.Cox
-        self.publish_prop['max gm'] = lambda: self.max_gm
-        self.publish_prop['max ss'] = lambda: self.min_ss
-        self.publish_prop['Vt'] = lambda: self.Vt
-        self.publish_prop['max Ion'] = lambda: self.max_Ion
-        self.publish_prop['max Ion Vd'] = lambda: self.max_Ion_Vd
-        self.publish_prop['max Ion Field'] = lambda: self.max_Ion_F
-        self.publish_prop['max Ion Vg'] = lambda: self.max_Ion_Vg
-        self.publish_prop['max Ion n'] = lambda: self.max_Ion_n
+        self._add_publish_property('mobility')
+        self._add_publish_property('dielectric_constant')
+        self._add_publish_property('tox')
+        self._add_publish_property('Cox')
+        self._add_publish_property('max_gm')
+        self._add_publish_property('max_ss')
+        self._add_publish_property('Vt')
+        self._add_publish_property('max_Ion')
+        self._add_publish_property('max_Ion_Vd')
+        self._add_publish_property('max_Ion_Field')
+        self._add_publish_property('max_Ion_Vg')
+        self._add_publish_property('max_Ion_n')
 
     def norm_Id(self, Id):
         return Id/self.width
@@ -122,8 +122,10 @@ class FET(Transistor):
 
     @max_gm.setter
     def max_gm(self, _in):
+        if isinstance(_in, np.ndarray):
+            _in = self.max_value(_in)
         assert_value(_in)
-        assert isinstance(_in, Value)
+        # assert isinstance(_in, Value)
         # if _in.unit.dimensionality !=
         self._max_gm = _in
 
@@ -133,6 +135,13 @@ class FET(Transistor):
 
     @min_ss.setter
     def min_ss(self, _in):
+        if isinstance(_in, np.ndarray):
+            # remove any zeros
+            _in = _in.flatten()
+            zero_val = Value(0.0, _in[0].unit)
+            zero_i = [i for i in range(len(_in)) if _in[i] == zero_val]
+            _in = np.delete(_in, zero_i)
+            _in = self.min_value(_in)
         self._min_ss = _in
 
     @property
@@ -184,6 +193,12 @@ class FET(Transistor):
         self.max_Ion_n = self.vg_to_n(_in)
         self._max_Ion_Vg = _in
 
+    def max_value(self, array):
+        raise NotImplementedError('You must implement max_value')
+
+    def min_value(self, array):
+        raise NotImplementedError('You must implement max_value')
+
 
 class NFET(FET):
 
@@ -193,6 +208,12 @@ class NFET(FET):
     def norm_Id(self, Id):
         # should not have to adjust anything
         return super(NFET, self).norm_Id(Id)
+
+    def max_value(self, array):
+        return abs(array).max()
+
+    def min_value(self, array):
+        return abs(array).min()
 
 
 class PFET(FET):
@@ -204,5 +225,11 @@ class PFET(FET):
         # should not have to adjust anything
         return super(PFET, self).norm_Id(Id)
 
-    def norm_Vg(self, vg):
-        return vg*-1
+    # def norm_Vg(self, vg):
+    #     return vg*-1
+
+    def max_value(self, array):
+        return abs(array).max()
+
+    def min_value(self, array):
+        return abs(array).min()

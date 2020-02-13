@@ -1,13 +1,13 @@
 """
 DataSet for IdVg data
 """
-from .Dataset import BaseDataSet
+from .Dataset import SetDataSet
 from ..config.globals import common_drain_current_names, common_drain_voltage_names, common_gate_current_names, common_gate_voltage_names,\
     common_source_current_names, common_source_voltage_names
-import warnings
+import numpy as np
 
 
-class IVDataSet(BaseDataSet):
+class IVDataSet(SetDataSet):
 
     master_independent = None
     secondary_independent = None
@@ -25,43 +25,36 @@ class IVDataSet(BaseDataSet):
             *args:
             **kwargs:
         """
-        super(IVDataSet, self).__init__(*args, **kwargs)
-
         # get the column names for the Vd, Id, Vg, Ig, Vs, Is columns. If there are multiple, save corresponding to the secondary variable.
         given_column_names = [drainv, draini, gatev, gatei, sourcev, sourcei]
         common_column_names = [common_drain_voltage_names, common_drain_current_names, common_gate_voltage_names, common_gate_current_names,
                                common_source_voltage_names, common_source_current_names]
-        column_names = ['vd', 'id', 'vg', 'ig', 'vs', 'is']
 
-        # loop th  rough all the column names
-        for i in range(len(column_names)):
-            # if no column name was given, then try to use common column names
-            if given_column_names[i] is None:
-                names = self._find_similar_column(common_column_names[i])
-            else:
-                names = self._find_similar_column(given_column_names[i])
+        super(IVDataSet, self).__init__(given_column_names=given_column_names, common_column_names=common_column_names, *args, **kwargs)
 
-            if names is None:
-                assert not (column_names[i] is self.master_dependent or column_names[i] is self.master_independent),\
-                    'Cannot find the column for {0}'.format(column_names[i])
-                warnings.warn('Cannot find the column for {0} in the dataset'.format(column_names[i]))
+        # now divide the data into fwd, bwd sweeps, if they exist
+        # get the args where the master independent changes sign.  If there are multiple for each row, raise an error
+        change_i = np.argwhere(np.diff(self.get_column(self.master_independent)) == 0.0)
+        assert change_i.shape[1] < 3, 'IV sweeps can only have a single direction or a forward and backward.' \
+                                      '  Yours has {0} sweep directions'.format(change_i.shape[1])
+        assert np.all(change_i[:, 1] == change_i[1, 1]), 'All IV sweeps must have the same number of x data points'
 
-            self.__dict__[column_names[i]] = names
-
-        a = 5
+        # now break up all the sets into fwd and bwd sweeps
+        if change_i.shape[1] == 2:
+            a = 5
 
 
 class IdVgDataSet(IVDataSet):
 
-    master_variable = 'Vg'
-    secondary_variable = 'Vd'
+    master_independent = 'vg'
+    secondary_independent = 'vd'
 
-    master_dependent = 'Id'
+    master_dependent = 'id'
 
 
 class IdVdDataSet(IVDataSet):
 
-    master_variable = 'Vd'
-    secondary_variable = 'Vg'
+    master_independent = 'vd'
+    secondary_independent = 'vg'
 
-    master_dependent = 'Id'
+    master_dependent = 'id'

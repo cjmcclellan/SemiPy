@@ -8,7 +8,7 @@ from physics.value import Value
 
 class Extractor(object):
 
-    def __init__(self, data_path):
+    def __init__(self):
         """
         Base class for data extractors
         Args:
@@ -16,6 +16,20 @@ class Extractor(object):
         """
         self.x_data = None
         self.y_data = None
+
+    def _clean_data(self, ndarry):
+        """
+        Remove all nan and inf from an ndarray by replacing with 0.0
+        Args:
+            ndarry (np.ndarray): The ndarray to be cleaned
+
+        Returns:
+            The cleaned ndarray
+        """
+        ndarry[ndarry == np.inf] = 0.0
+        ndarry[ndarry == -np.inf] = 0.0
+        ndarry = np.nan_to_num(ndarry)
+        return ndarry
 
     def _slope(self, x_data, y_data):
         """
@@ -29,7 +43,7 @@ class Extractor(object):
 
         """
         slope = np.diff(y_data)/np.diff(x_data)
-        return slope
+        return self._clean_data(slope)
 
     def _plot_line(self, x_min, x_max, a, b):
         x_data = Value.array_like(array=np.linspace(x_min, x_max), unit=x_min.unit)
