@@ -79,6 +79,9 @@ class Extractor(object):
 
         return a, b, x_inter
 
+    def extract_data(self):
+        raise NotImplementedError('You must implement the extract_data function for the Extractor')
+
 
 class TrendLine(object):
 

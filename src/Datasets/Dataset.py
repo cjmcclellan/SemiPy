@@ -29,6 +29,7 @@ class BaseDataSet(object):
 
         # placeholder for the gathered column names
         self.gathered_column_names = {}
+        self.super_gathered_column_names = {}
 
         # now read the data.  If not txt, csv, or xls, raise and error
         if 'csv' in self.data_path:
@@ -135,7 +136,19 @@ class BaseDataSet(object):
 
         self.__assert_valid_column_name(column_name)
 
-        return self.df[self.gathered_column_names[column_name]].to_numpy()
+        return self.df[self._get_colmun_names(column_name)].to_numpy()
+
+    def _get_colmun_names(self, column_name):
+        # first look if the column name is in the super gathered names list.
+        if column_name in self.super_gathered_column_names.keys():
+            result = []
+            for columns in self.super_gathered_column_names[column_name]:
+                result = result + self.gathered_column_names[columns]
+            return result
+        elif column_name in self.gathered_column_names.keys():
+            return self.gathered_column_names[column_name]
+        else:
+            raise ValueError('Could not find the column {0} in the known columns'.format(column_name))
 
     # def update_column(self, column_name, data):
     #     """
@@ -148,6 +161,17 @@ class BaseDataSet(object):
     #         None
     #     """
     #
+    def adjust_column_name(self, old_name, new_name):
+        """
+        Adjust the name of a column
+        Args:
+            old_name (str):
+            new_name (str):
+
+        Returns:
+
+        """
+        pass
 
     def adjust_column(self, column_name, func):
         """
@@ -161,7 +185,7 @@ class BaseDataSet(object):
         """
         new_column = func(self.get_column(column_name))
 
-        self.df[self.gathered_column_names[column_name]] = new_column
+        self.df[self._get_colmun_names(column_name)] = new_column
 
     def __assert_valid_column_name(self, column_name):
         assert column_name in self.column_names, 'The column name {0} is not in the list of column names {1}'.format(column_name,
@@ -262,10 +286,12 @@ class SetDataSet(BaseDataSet):
 
         column_name = column_name.lower()
 
-        assert column_name in self.column_names, 'The column name {0} is not in the list of column names {1}'.format(column_name,
-                                                                                                                     self.column_names)
+        # assert column_name in self.column_names, 'The column name {0} is not in the list of column names {1}'.format(column_name,
+        #                                                                                                              self.column_names)
         # now return the column
-        return self.df[self.gathered_column_names[column_name][i]].to_numpy()
+        # column_names = self._get_colmun_names(column_name)
+        # only grab columns from that set.
+        return self.df[self._get_colmun_names(column_name)[i]].to_numpy()
 
     def __assert_valid_column(self, column_name, column_data):
         """
@@ -274,7 +300,7 @@ class SetDataSet(BaseDataSet):
             column_name:
             column_data (np.ndarray):
 
-        Returns:
+        Returns:self._get_colmun_names(column_name)
 
         """
         assert isinstance(column_data, np.ndarray), 'The column_data must be of type np.ndarray, not {0}'.format(type(column_data))

@@ -41,7 +41,10 @@ class IVDataSet(SetDataSet):
 
         # now break up all the sets into fwd and bwd sweeps
         if change_i.shape[1] == 2:
-            a = 5
+            self.super_gathered_column_names['id'] = ['id_fwd', 'id_bwd']
+            self.gathered_column_names['id_fwd'] = self.gathered_column_names['id']
+            self.gathered_column_names['id_bwd'] = self.gathered_column_names['id']
+            self.gathered_column_names.pop('id')
 
 
 class IdVgDataSet(IVDataSet):
