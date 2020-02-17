@@ -1,8 +1,8 @@
 """
 DataSet for IdVg data
 """
-from .Dataset import SetDataSet
-from ..config.globals import common_drain_current_names, common_drain_voltage_names, common_gate_current_names, common_gate_voltage_names,\
+from Extractions.Datasets.Dataset import SetDataSet
+from Extractions.config.globals import common_drain_current_names, common_drain_voltage_names, common_gate_current_names, common_gate_voltage_names,\
     common_source_current_names, common_source_voltage_names
 import numpy as np
 
@@ -38,13 +38,51 @@ class IVDataSet(SetDataSet):
         assert change_i.shape[1] < 3, 'IV sweeps can only have a single direction or a forward and backward.' \
                                       '  Yours has {0} sweep directions'.format(change_i.shape[1])
         assert np.all(change_i[:, 1] == change_i[1, 1]), 'All IV sweeps must have the same number of x data points'
+        # now save the change point
+        self.change_i = change_i[1, 1] + 1
 
-        # now break up all the sets into fwd and bwd sweeps
-        if change_i.shape[1] == 2:
-            self.super_gathered_column_names['id'] = ['id_fwd', 'id_bwd']
-            self.gathered_column_names['id_fwd'] = self.gathered_column_names['id']
-            self.gathered_column_names['id_bwd'] = self.gathered_column_names['id']
-            self.gathered_column_names.pop('id')
+    @staticmethod
+    def _check_fwd_bwd(column_name):
+        # check if fwd or bwd are in the column name
+        if '_fwd' in column_name:
+            return column_name[:-4], True, False
+        if '_bwd' in column_name:
+            return column_name[:-4], False, True
+        else:
+            return column_name, False, False
+
+    def get_column(self, column_name, return_set_values=False):
+        # add logic to deal with fwd and bwd requests
+        column_name, fwd, bwd = self._check_fwd_bwd(column_name)
+        column_data = super(IVDataSet, self).get_column(column_name, return_set_values)
+
+        if fwd:
+            column_data = column_data[..., :self.change_i]
+        elif bwd:
+            column_data = column_data[..., self.change_i:]
+
+        return column_data
+
+    def get_column_set(self, column_name, secondary_value):
+        column_name, fwd, bwd = self._check_fwd_bwd(column_name)
+
+        column_data = super(IVDataSet, self).get_column_set(column_name, secondary_value)
+
+        if fwd:
+            column_data = column_data[..., :self.change_i]
+        elif bwd:
+            column_data = column_data[..., self.change_i:]
+
+        return column_data
+        # # now break up all the sets into fwd and bwd sweeps
+        # if change_i.shape[1] == 2:
+        #     id, vd = self.get_column('id', return_set_values=True)
+        #     self.add_super_set('id', ['id_fwd', 'id_bwd'])
+        #     self.add_column('id_fwd', id[0, :80], secondary_indep_value=vd[0])
+        #     # self.super_gathered_column_names['id'] = ['id_fwd', 'id_bwd']
+        #     self.gathered_column_names['id_fwd'] = self.gathered_column_names['id']
+        #     self.gathered_column_names['id_bwd'] = self.gathered_column_names['id']
+        #     self.gathered_column_names.pop('id')
 
 
 class IdVgDataSet(IVDataSet):

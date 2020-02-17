@@ -2,3 +2,4 @@ numpy
 git+https://github.com/cjmcclellan/physics
 pandas
 matplotlib
+django_plotly_dash

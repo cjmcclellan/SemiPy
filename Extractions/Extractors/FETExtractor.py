@@ -1,13 +1,13 @@
 """
 Extractor for extracting information of Field-Effect Transistors from IdVg and IdVd data sets
 """
-from .Extractors import Extractor
-from ..Datasets.IVDataset import IdVgDataSet, IdVdDataSet
-from ..Devices.FET.Transistor import NFET, PFET
+from Extractions.Extractors.Extractors import Extractor
+from Extractions.Datasets.IVDataset import IdVgDataSet, IdVdDataSet
+from Extractions.Devices.FET.Transistor import NFET, PFET
 from physics.value import Value, ureg
 import warnings
 import numpy as np
-from ..helper.plotting import create_scatter_plot
+from Extractions.helper.plotting import create_scatter_plot
 
 
 class FETExtractor(Extractor):
@@ -59,15 +59,18 @@ class FETExtractor(Extractor):
         a = 5
 
         # now normalize all the data in idvg and idvd
-        adjust_current = lambda x: self.FET.norm_Id(Value.array_like(x, unit=ureg.amp))
-        self.idvg.adjust_column('id', func=adjust_current)
-        self.idvd.adjust_column('id', func=adjust_current)
-
+        adjust_current = lambda x: self.FET.norm_Id(Value.array_like(x * 1e6, unit=ureg.microamp))
         adjust_volt = lambda x: Value.array_like(x, unit=ureg.volt)
-        self.idvg.adjust_column('vg', func=adjust_volt)
-        self.idvg.adjust_column('vd', func=adjust_volt)
-        self.idvd.adjust_column('vg', func=adjust_volt)
-        self.idvd.adjust_column('vd', func=adjust_volt)
+
+        if self.idvg is not None:
+            self.idvg.adjust_column('id', func=adjust_current)
+            self.idvg.adjust_column('vg', func=adjust_volt)
+            self.idvg.adjust_column('vd', func=adjust_volt)
+
+        if self.idvd is not None:
+            self.idvd.adjust_column('id', func=adjust_current)
+            self.idvd.adjust_column('vg', func=adjust_volt)
+            self.idvd.adjust_column('vd', func=adjust_volt)
 
         # now run the extractions
         self.__extract_data()
@@ -79,12 +82,42 @@ class FETExtractor(Extractor):
         Returns:
             None
         """
+        # now compute the vt and gm using the max Vd
+        Vd = self.idvg.get_secondary_indep_values()
+        max_vd = max(Vd)
+        max_vg = self.FET.max_value(self.idvg.get_column_set('vg_bwd', max_vd))
         # compute the gm
-        gm = self._slope(x_data=self.idvg.get_column('vg'), y_data=self.idvg.get_column('id'))
+        gm_bwd = self._slope(x_data=self.idvg.get_column_set('vg_bwd', max_vd), y_data=self.idvg.get_column_set('id_bwd', max_vd))
+        gm_fwd = self._slope(x_data=self.idvg.get_column_set('vg_fwd', max_vd), y_data=self.idvg.get_column_set('id_fwd', max_vd))
+        # gm = np.concatenate((gm_fwd, gm_bwd), axis=-1)
         # repeat the last value so the shape matches
-        gm = np.concatenate((gm, gm[:, -1:]), axis=-1)
-        self.idvg.add_column(column_name='gm', column_data=gm)
-        self.FET.max_gm = gm
+        # gm = np.concatenate((gm, gm[:, -1:]), axis=-1)
+        # self.idvg.add_column(column_name='gm', column_data=gm)
+        # get the max fwd and bwd gm and indexs
+        max_gm_fwd, max_gm_fwd_i = self.FET.max_value(gm_fwd, return_index=True)
+        max_gm_bwd, max_gm_bwd_i = self.FET.max_value(gm_bwd, return_index=True)
+
+        # if the max gm is the last point, then warn the user that the gm has not turned over and the Vt extraction may have error
+        if max_gm_fwd_i == gm_fwd.shape[0]:
+            warnings.warn('The transconductance (gm) has not reached maximum by Vd of {0} and Vg of {1}, meaning there will be error in '
+                          'the threshold voltage'.format(max_vd, max_vg))
+        if max_gm_bwd_i == 0:
+            warnings.warn('The transconductance (gm) has not reached maximum by Vd of {0} and Vg of {1}, meaning there will be error in '
+                          'the threshold voltage'.format(max_vd, max_vg))
+
+        self.FET.max_gm = max(max_gm_bwd, max_gm_fwd)
+        self.FET.max_gm_Vd = Value(max_vd, ureg.volt)
+
+        _, b, Vt_fwd = self._linear_extraction(y=self.idvg.get_column_set('id_fwd', secondary_value=max_vd)[max_gm_fwd_i],
+                                               x=self.idvg.get_column_set('vg_fwd', secondary_value=max_vd)[max_gm_fwd_i],
+                                               slope=max_gm_fwd)
+
+        _, b, Vt_bwd = self._linear_extraction(y=self.idvg.get_column_set('id_bwd', secondary_value=max_vd)[max_gm_bwd_i],
+                                               x=self.idvg.get_column_set('vg_bwd', secondary_value=max_vd)[max_gm_bwd_i],
+                                               slope=max_gm_bwd)
+
+        self.FET.Vt_fwd = Vt_fwd
+        self.FET.Vt_bwd = Vt_bwd
 
         # compute the ss
         ss = self._slope(y_data=self.idvg.get_column('vg'), x_data=np.log10(self.idvg.get_column('id')))
@@ -92,8 +125,7 @@ class FETExtractor(Extractor):
         self.idvg.add_column(column_name='ss', column_data=ss)
         self.FET.min_ss = ss
 
-
-
+        self.FET.compute_properties()
 
     @staticmethod
     def __check_properties(length, width, tox, epiox):
