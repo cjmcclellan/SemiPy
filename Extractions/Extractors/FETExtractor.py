@@ -94,8 +94,8 @@ class FETExtractor(Extractor):
         # gm = np.concatenate((gm, gm[:, -1:]), axis=-1)
         # self.idvg.add_column(column_name='gm', column_data=gm)
         # get the max fwd and bwd gm and indexs
-        max_gm_fwd, max_gm_fwd_i = self.FET.max_value(gm_fwd, return_index=True)
-        max_gm_bwd, max_gm_bwd_i = self.FET.max_value(gm_bwd, return_index=True)
+        max_gm_fwd, max_gm_fwd_i = self.FET.max_slope_value(gm_fwd, return_index=True)
+        max_gm_bwd, max_gm_bwd_i = self.FET.max_slope_value(gm_bwd, return_index=True)
 
         # if the max gm is the last point, then warn the user that the gm has not turned over and the Vt extraction may have error
         if max_gm_fwd_i == gm_fwd.shape[0]:
@@ -105,7 +105,7 @@ class FETExtractor(Extractor):
             warnings.warn('The transconductance (gm) has not reached maximum by Vd of {0} and Vg of {1}, meaning there will be error in '
                           'the threshold voltage'.format(max_vd, max_vg))
 
-        self.FET.max_gm = max(max_gm_bwd, max_gm_fwd)
+        self.FET.max_gm = self.FET.max_slope_value(Value.array_like(np.array([max_gm_bwd, max_gm_fwd]), unit=max_gm_fwd.unit))
         self.FET.max_gm_Vd = Value(max_vd, ureg.volt)
 
         _, b, Vt_fwd = self._linear_extraction(y=self.idvg.get_column_set('id_fwd', secondary_value=max_vd)[max_gm_fwd_i],

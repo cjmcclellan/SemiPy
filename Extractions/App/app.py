@@ -25,7 +25,7 @@ class IVExtractionApp(StaticPlotting2DApp):
                     'min_ss': 'Minimum Subthreshold Swing (mV/dec)', 'max_gm': 'Maximum Transconductance ({0}S/{1}m)'.format(get_symbol_unicode('mu'), get_symbol_unicode('mu'))}
 
     x_options = {'id': 'Drain Current ({0}A/{1}m)'.format(get_symbol_unicode('mu'), get_symbol_unicode('mu')),
-                 'vg': 'Gate Voltage (V)'}
+                 'vg': 'Gate Voltage (V)', 'ss': 'Subthreshold Swing (mV/dec)'}
 
     data_table_default_data = [{'output_name': output, 'output_value': 0.0} for output in output_values.values()]
 
@@ -112,7 +112,7 @@ class IVExtractionApp(StaticPlotting2DApp):
 
     @classmethod
     def create_app_instance(cls, name, *args, **kwargs):
-        return IVExtractionApp(name=name, y_variables=[cls.x_options['id']], x_variables=[cls.x_options['vg']],
+        return IVExtractionApp(name=name, y_variables=[cls.x_options['id'], cls.x_options['ss']], x_variables=[cls.x_options['vg']],
                                compute_function=cls.compute_function, class_name='class', hidden_update=True, *args, **kwargs)
 
     @staticmethod
@@ -132,7 +132,9 @@ class IVExtractionApp(StaticPlotting2DApp):
 
                 output_table = [{'output_name': name, 'output_value': value} for name, value in table_list]
 
-                result = {IVExtractionApp.x_options['id']: test.idvg.get_column('id'), IVExtractionApp.x_options['vg']: test.idvg.get_column('vg'),
+                result = {IVExtractionApp.x_options['id']: test.idvg.get_column('id'),
+                          IVExtractionApp.x_options['vg']: test.idvg.get_column('vg'),
+                          IVExtractionApp.x_options['ss']: test.idvg.get_column('ss'),
                           'class': ['Vd = {0}'.format(val) for val in test.idvg.get_secondary_indep_values()],
                           'output_table': output_table}
             except Exception:

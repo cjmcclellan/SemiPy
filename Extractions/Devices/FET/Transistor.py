@@ -151,10 +151,8 @@ class FET(Transistor):
     @max_gm.setter
     def max_gm(self, _in):
         if isinstance(_in, np.ndarray):
-            _in = self.max_value(_in)
+            _in = self.max_slope_value(_in)
         assert_value(_in)
-        # assert isinstance(_in, Value)
-        # if _in.unit.dimensionality !=
         self._max_gm = _in
 
     @property
@@ -178,7 +176,7 @@ class FET(Transistor):
             zero_val = Value(0.0, _in[0].unit)
             zero_i = [i for i in range(len(_in)) if _in[i] == zero_val]
             _in = np.delete(_in, zero_i)
-            _in = self.min_value(_in)
+            _in = self.min_slope_value(_in)
         _in = _in.adjust_unit(ureg.meter * ureg.millivolt / ureg.amp)
         self._min_ss = _in
 
@@ -237,6 +235,12 @@ class FET(Transistor):
     def min_value(self, array, return_index=False):
         raise NotImplementedError('You must implement max_value')
 
+    def max_slope_value(self, array, return_index=False):
+        raise NotImplementedError('You must implement max_value')
+
+    def min_slope_value(self, array, return_index=False):
+        raise NotImplementedError('You must implement max_value')
+
 
 class NFET(FET):
 
@@ -258,6 +262,12 @@ class NFET(FET):
         if return_index:
             return result, np.argmin(abs(array))
         return result
+
+    def max_slope_value(self, array, return_index=False):
+        return self.max_value(array, return_index)
+
+    def min_slope_value(self, array, return_index=False):
+        return self.min_value(array, return_index)
 
 
 class PFET(FET):
@@ -282,4 +292,18 @@ class PFET(FET):
         result = abs(array).min()
         if return_index:
             return result, np.argmin(abs(array))
+        return result
+
+    def max_slope_value(self, array, return_index=False):
+        array = array * -1
+        result = max(array) * -1
+        if return_index:
+            return result, np.argmax(array)
+        return result
+
+    def min_slope_value(self, array, return_index=False):
+        array = array * -1
+        result = min(abs(array)) * -1
+        if return_index:
+            return result, np.argmin(array)
         return result
