@@ -33,18 +33,6 @@ class Transistor(BaseDevice):
         # publish properties
         self._add_publish_property('width')
         self._add_publish_property('length')
-        # self.publish_prop = {'Width': lambda: self.width,
-        #                      'length': lambda: self.length}
-
-    # finalize the transistor characteristics into a CSV file
-    # def publish_csv(self, path, name):
-    #     path = join(path, name + '.csv')
-    #     with open(path, 'w') as f:
-    #         for key in self.publish_prop.keys():
-    #             if isinstance(self.publish_prop[key](), Value):
-    #                 f.write("%s,%s,%s\n" % (key, self.publish_prop[key]().value, self.publish_prop[key]().unit))
-    #             else:
-    #                 f.write("%s,%s\n" % (key, self.publish_prop[key]()))
 
 
 class FET(Transistor):
@@ -58,7 +46,7 @@ class FET(Transistor):
             ureg.farad / (ureg.centimeter ** 2))
 
         # placeholders
-        self._mobility = None
+        self.max_mobility = None
         self.max_gm = Transconductance()
         # self._max_gm_Vd = None
         self._min_ss = SubthresholdSwing()
@@ -71,25 +59,25 @@ class FET(Transistor):
         # self._max_Ion_F = None
         # self._max_Ion_Vg = None
         # self._max_Ion_n = None
-        self._Ion_1V_1e13 = None
-        self._Ion_1e13 = None
-        self._Ion_1e13_Vd = None
+        # self._Ion_1V_1e13 = None
+        # self._Ion_1e13 = None
+        # self._Ion_1e13_Vd = None
 
         # add to the publish properties
-        self._add_publish_property('mobility')
-        self._add_publish_property('dielectric_constant')
-        self._add_publish_property('tox')
-        self._add_publish_property('Cox')
-        self._add_publish_property('max_gm')
-        self._add_publish_property('max_ss')
-        self._add_publish_property('Vt_fwd')
-        self._add_publish_property('Vt_bwd')
-        self._add_publish_property('hysteresis')
-        self._add_publish_property('max_Ion')
-        self._add_publish_property('max_Ion_Vd')
-        self._add_publish_property('max_Ion_Field')
-        self._add_publish_property('max_Ion_Vg')
-        self._add_publish_property('max_Ion_n')
+        # self._add_publish_property('mobility')
+        # self._add_publish_property('dielectric_constant')
+        # self._add_publish_property('tox')
+        # self._add_publish_property('Cox')
+        # self._add_publish_property('max_gm')
+        # self._add_publish_property('max_ss')
+        # self._add_publish_property('Vt_fwd')
+        # self._add_publish_property('Vt_bwd')
+        # self._add_publish_property('hysteresis')
+        # self._add_publish_property('max_Ion')
+        # self._add_publish_property('max_Ion_Vd')
+        # self._add_publish_property('max_Ion_Field')
+        # self._add_publish_property('max_Ion_Vg')
+        # self._add_publish_property('max_Ion_n')
 
     # def set(self, prop_name, value):
 
@@ -101,12 +89,13 @@ class FET(Transistor):
         """
         # first hysteresis, then mobility
         if self.Vt_bwd is not None and self.Vt_fwd is not None:
-            self.hysteresis = self.Vt_fwd.prop_value - self.Vt_bwd.prop_value
-            self.Vt_avg = (self.Vt_fwd.prop_value + self.Vt_bwd.prop_value) / 2.0
+            self.hysteresis.set(self.Vt_fwd.prop_value - self.Vt_bwd.prop_value)
+            self.Vt_avg.set((self.Vt_fwd.prop_value + self.Vt_bwd.prop_value) / 2.0)
 
         if self.Cox is not None and self.max_gm.prop_value is not None and self.length is not None:
-            self._mobility = self.length * self.max_gm.prop_value / (self.Cox * self.max_gm['Vd'])
-            self._mobility = self._mobility.adjust_unit(ureg.centimeter * ureg.centimeter / (ureg.volt * ureg.second))
+            mobility = self.length * self.max_gm.prop_value / (self.Cox * self.max_gm['Vd'])
+            mobility = mobility.adjust_unit(ureg.centimeter * ureg.centimeter / (ureg.volt * ureg.second))
+            self.max_mobility.set(mobility, {'Vg': self.max_gm['Vg'], 'Vd': self.max_gm['Vd']})
 
     def norm_Id(self, Id):
         return Id/self.width
@@ -114,12 +103,11 @@ class FET(Transistor):
     def norm_Field(self, vd):
         return vd/self.width
 
-    def norm_Vg(self, vg):
-        return vg
+    # def norm_Vg(self, vg):
+    #     return vg
 
     def vg_to_n(self, vg):
-        n = self.Cox * (vg - self.Vt_fwd) / electron_charge_C
-        # n[n < Value(0, n[0].unit)] = 0, return_index=False
+        n = self.Cox * (vg - self.Vt_avg) / electron_charge_C
         return n
 
     # @property
@@ -140,14 +128,14 @@ class FET(Transistor):
     #     assert_value(_in)
     #     self._Vt_bwd = _in
 
-    @property
-    def mobility(self):
-        return self._mobility
-
-    @mobility.setter
-    def mobility(self, _in):
-        assert_value(_in)
-        self._mobility = _in
+    # @property
+    # def mobility(self):
+    #     return self._mobility
+    #
+    # @mobility.setter
+    # def mobility(self, _in):
+    #     assert_value(_in)
+    #     self._mobility = _in
 
     # @property
     # def max_gm(self):
@@ -159,14 +147,14 @@ class FET(Transistor):
     #         _in = self.max_slope_value(_in)
     #     self._max_gm.set(_in)
 
-    @property
-    def max_gm_Vd(self):
-        return self._max_gm_Vd
-
-    @max_gm_Vd.setter
-    def max_gm_Vd(self, _in):
-        assert_value(_in)
-        self._max_gm_Vd = _in
+    # @property
+    # def max_gm_Vd(self):
+    #     return self._max_gm_Vd
+    #
+    # @max_gm_Vd.setter
+    # def max_gm_Vd(self, _in):
+    #     assert_value(_in)
+    #     self._max_gm_Vd = _in
 
     @property
     def min_ss(self):
@@ -194,44 +182,44 @@ class FET(Transistor):
     #     if _in.unit.dimensionality != ureg.amp/ureg.meter:
     #         _in/self.width
     #     self._max_Ion = _in
-
-    @property
-    def max_Ion_n(self):
-        return self._max_Ion_n
-
-    @max_Ion_n.setter
-    def max_Ion_n(self, _in):
-        assert_value(_in)
-        self._max_Ion_n = _in
-
-    @property
-    def max_Ion_Vd(self):
-        return self._max_Ion_Vd
-
-    @max_Ion_Vd.setter
-    def max_Ion_Vd(self, _in):
-        assert_value(_in)
-        self.max_Ion_F = self.norm_Field(_in)
-        self._max_Ion_Vd = _in
-
-    @property
-    def max_Ion_F(self):
-        return self._max_Ion_F
-
-    @max_Ion_F.setter
-    def max_Ion_F(self, _in):
-        assert_value(_in)
-        self._max_Ion_F = _in
-
-    @property
-    def max_Ion_Vg(self):
-        return self._max_Ion_Vg
-
-    @max_Ion_Vg.setter
-    def max_Ion_Vg(self, _in):
-        assert_value(_in)
-        self.max_Ion_n = self.vg_to_n(_in)
-        self._max_Ion_Vg = _in
+    #
+    # @property
+    # def max_Ion_n(self):
+    #     return self._max_Ion_n
+    #
+    # @max_Ion_n.setter
+    # def max_Ion_n(self, _in):
+    #     assert_value(_in)
+    #     self._max_Ion_n = _in
+    #
+    # @property
+    # def max_Ion_Vd(self):
+    #     return self._max_Ion_Vd
+    #
+    # @max_Ion_Vd.setter
+    # def max_Ion_Vd(self, _in):
+    #     assert_value(_in)
+    #     self.max_Ion_F = self.norm_Field(_in)
+    #     self._max_Ion_Vd = _in
+    #
+    # @property
+    # def max_Ion_F(self):
+    #     return self._max_Ion_F
+    #
+    # @max_Ion_F.setter
+    # def max_Ion_F(self, _in):
+    #     assert_value(_in)
+    #     self._max_Ion_F = _in
+    #
+    # @property
+    # def max_Ion_Vg(self):
+    #     return self._max_Ion_Vg
+    #
+    # @max_Ion_Vg.setter
+    # def max_Ion_Vg(self, _in):
+    #     assert_value(_in)
+    #     self.max_Ion_n = self.vg_to_n(_in)
+    #     self._max_Ion_Vg = _in
 
     def max_value(self, array, return_index=False):
         raise NotImplementedError('You must implement max_value')

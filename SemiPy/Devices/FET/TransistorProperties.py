@@ -27,15 +27,21 @@ class CurrentDensity(FETProperty):
     prop_dimensionality = ureg.amp / ureg.meter
 
 
-class Transconductance(FETProperty):
+class Mobility(FETProperty):
 
-    prop_name = 'Transconductance'
-    prop_dimensionality = 1 / (ureg.ohm * ureg.meter)
+    prop_name = 'Mobility'
+    prop_dimensionality = ureg.meter * ureg.meter / (ureg.volt * ureg.second)
 
 
 class SubthresholdSwing(FETProperty):
 
     prop_name = 'Subthreshold Swing'
     prop_dimensionality = ureg.amp / (ureg.volt * ureg.meter)
+
+
+class Transconductance(FETProperty):
+
+    prop_name = 'Transconductance'
+    prop_dimensionality = 1 / (ureg.ohm * ureg.meter)
 
 

@@ -5,16 +5,19 @@ from SemiPy.Datasets.Dataset import SetDataSet
 from SemiPy.config.globals import common_drain_current_names, common_drain_voltage_names, common_gate_current_names, common_gate_voltage_names,\
     common_source_current_names, common_source_voltage_names
 import numpy as np
+from physics.value import Value, ureg
 
 
 class IVDataSet(SetDataSet):
 
     master_independent = None
     secondary_independent = None
+    secondary_independent_unit = None
 
     master_dependent = None
 
     column_names = ['vd', 'id', 'vg', 'ig', 'vs', 'is']
+    column_units = [ureg.volt, ureg.amp, ureg.volt, ureg.amp, ureg.volt, ureg.amp]
 
     def __init__(self, drainv=None, draini=None, gatev=None, gatei=None, sourcei=None, sourcev=None, *args, **kwargs):
         """
@@ -41,6 +44,18 @@ class IVDataSet(SetDataSet):
         assert np.all(change_i[:, 1] == change_i[1, 1]), 'All IV sweeps must have the same number of x data points'
         # now save the change point
         self.change_i = change_i[1, 1] + 1
+
+        # now convert the secondary independents to values
+        self._convert_secondary_independent_to_value()
+
+        # convert all the columns to Values
+        for column, unit in zip(self.column_names, self.column_units):
+            if self.gathered_column_names[column] is not None:
+                self.adjust_column(column, func=self._convert_to_value(unit=unit))
+
+    def _convert_to_value(self, unit):
+        # creates a lambda function for converting values to a unit
+        return lambda x: Value.array_like(x, unit=unit)
 
     def _check_fwd_bwd(self, column_name):
         # check if fwd or bwd are in the column name
@@ -80,15 +95,12 @@ class IVDataSet(SetDataSet):
             column_data = column_data[..., self.change_i:]
 
         return column_data
-        # # now break up all the sets into fwd and bwd sweeps
-        # if change_i.shape[1] == 2:
-        #     id, vd = self.get_column('id', return_set_values=True)
-        #     self.add_super_set('id', ['id_fwd', 'id_bwd'])
-        #     self.add_column('id_fwd', id[0, :80], secondary_indep_value=vd[0])
-        #     # self.super_gathered_column_names['id'] = ['id_fwd', 'id_bwd']
-        #     self.gathered_column_names['id_fwd'] = self.gathered_column_names['id']
-        #     self.gathered_column_names['id_bwd'] = self.gathered_column_names['id']
-        #     self.gathered_column_names.pop('id')
+
+    def _convert_secondary_independent_to_value(self):
+        # converts the keys in the secondary independent dict to values
+        secondary_value_unit = self.column_units[self.column_names.index(self.secondary_independent)]
+        self.secondary_indep_values = {Value(value=key, unit=secondary_value_unit): val
+                                       for key, val in self.secondary_indep_values.items()}
 
 
 class IdVgDataSet(IVDataSet):
@@ -105,3 +117,4 @@ class IdVdDataSet(IVDataSet):
     secondary_independent = 'vg'
 
     master_dependent = 'id'
+
