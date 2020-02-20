@@ -36,7 +36,10 @@ class BaseDataSet(object):
                 self.df = pd.read_csv(self.data_path)
 
             elif 'txt' in self.data_path:
-                self.df = pd.read_csv(self.data_path, encoding='utf-16', sep='\t')
+                try:
+                    self.df = pd.read_csv(self.data_path, encoding='utf-16', sep='\t')
+                except UnicodeError:
+                    self.df = pd.read_csv(self.data_path, encoding='utf-8', sep='\t')
 
             elif 'xls' in self.data_path:
                 self.df = pd.read_excel(self.data_path)
@@ -237,7 +240,7 @@ class SetDataSet(BaseDataSet):
 
     secondary_independent = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, secondary_independent_values=None, *args, **kwargs):
         """
         A DataSet with sub sets within it dictated by the secondary_independent variable.  If there are any duplicate values for the
         secondary_independent, the first value will be used
@@ -249,16 +252,25 @@ class SetDataSet(BaseDataSet):
         super(SetDataSet, self).__init__(*args, **kwargs)
 
         # now gather what the secondary independent values are for each set
-        column_values = self.get_column(self.secondary_independent)
+        if secondary_independent_values is None:
+            assert self._get_colmun_names(self.secondary_independent) is not None,\
+                'Cannot find the required column {0} in the dataset'.format(self.secondary_independent)
+            column_values = self.get_column(self.secondary_independent)[:, 0]
+        else:
+            num_sets = self.get_column(self.master_independent).shape[0]
+            assert num_sets == len(secondary_independent_values),\
+                'You provided {0} values for {1}, but there are {2} sets'.format(len(secondary_independent_values),
+                                                                                 self.secondary_independent, num_sets)
+            column_values = secondary_independent_values
 
         self.secondary_indep_values = OrderedDict()
 
         # loop through grabbing the values and ignoring any duplicates (always taking the first column)
         index = 0
-        for i in range(len(self.gathered_column_names[self.secondary_independent])):
-            if self.secondary_indep_values.get(column_values[i][0], None) is None and not np.isnan(column_values[i][0]):
+        for i in range(len(column_values)):
+            if self.secondary_indep_values.get(column_values[i], None) is None and not np.isnan(column_values[i]):
                 # now add all the column names to the secondary_indep_values dict
-                self.secondary_indep_values[column_values[i][0]] =\
+                self.secondary_indep_values[column_values[i]] =\
                     [column[index] for column in self.gathered_column_names.values() if column is not None]
                 index += 1
             # else remove all the data from that set
@@ -366,7 +378,7 @@ class SetDataSet(BaseDataSet):
 
     def add_column(self, column_name, column_data, secondary_indep_value=None):
         """
-        Similar to DatSet.add_column but enforces that there must enough columns for every subset of the dataset
+        Similar to DatSet.add_column but enforces that there must enough columns for every subset ofvd_values=None,  the dataset
         Args:
             column_name (str):
             column_data (np.ndarray): The committing data.  Should be of shape (number of subsets, number of rows)

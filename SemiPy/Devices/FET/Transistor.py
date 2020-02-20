@@ -1,7 +1,7 @@
 import numpy as np
 from physics.fundamental_constants import free_space_permittivity_F_div_cm, electron_charge_C
 from SemiPy.Devices.BaseDevice import BaseDevice
-from SemiPy.Devices.FET.TransistorProperties import CurrentDensity, Transconductance, SubthresholdSwing, Voltage
+from SemiPy.Devices.FET.TransistorProperties import CurrentDensity, Transconductance, SubthresholdSwing, Voltage, Mobility
 from physics.helper import assert_value
 from physics.units import ureg
 from physics.value import Value
@@ -46,15 +46,15 @@ class FET(Transistor):
             ureg.farad / (ureg.centimeter ** 2))
 
         # placeholders
-        self.max_mobility = None
-        self.max_gm = Transconductance()
+        self.max_mobility = Mobility(name='maximum field-effect mobility')
+        self.max_gm = Transconductance(name='maximum transconductance')
         # self._max_gm_Vd = None
-        self._min_ss = SubthresholdSwing()
-        self.Vt_bwd = Voltage()
-        self.Vt_fwd = Voltage()
-        self.Vt_avg = Voltage()
-        self.hysteresis = Voltage()
-        self.max_Ion = CurrentDensity()
+        self._min_ss = SubthresholdSwing(name='minimum subthreshold swing')
+        self.Vt_bwd = Voltage(name='Backward Sweep Threshold Voltage')
+        self.Vt_fwd = Voltage(name='Forward Sweep Threshold Voltage')
+        self.Vt_avg = Voltage(name='Average Threshold Voltage')
+        self.hysteresis = Voltage(name='Hysteresis')
+        self.max_Ion = CurrentDensity(name='Maximum Current Density')
         # self._max_Ion_Vd = None
         # self._max_Ion_F = None
         # self._max_Ion_Vg = None
@@ -91,6 +91,10 @@ class FET(Transistor):
         if self.Vt_bwd is not None and self.Vt_fwd is not None:
             self.hysteresis.set(self.Vt_fwd.prop_value - self.Vt_bwd.prop_value)
             self.Vt_avg.set((self.Vt_fwd.prop_value + self.Vt_bwd.prop_value) / 2.0)
+        elif self.Vt_fwd is not None:
+            self.Vt_avg = self.Vt_fwd
+        elif self.Vt_bwd is not None:
+            self.Vt_avg = self.Vt_bwd
 
         if self.Cox is not None and self.max_gm.prop_value is not None and self.length is not None:
             mobility = self.length * self.max_gm.prop_value / (self.Cox * self.max_gm['Vd'])
@@ -107,7 +111,10 @@ class FET(Transistor):
     #     return vg
 
     def vg_to_n(self, vg):
-        n = self.Cox * (vg - self.Vt_avg) / electron_charge_C
+        assert self.Vt_avg.prop_value is not None,\
+            'You must calculate the average Vt by running FET.compute_properties() before computing the carrier density'
+        # adding extra values to make the units be centimeter ** -2
+        n = Value(value=1.0, unit=ureg.coulomb) * self.Cox * (vg - self.Vt_avg.prop_value) / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
         return n
 
     # @property

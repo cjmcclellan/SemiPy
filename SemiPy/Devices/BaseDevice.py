@@ -58,7 +58,7 @@ class DeviceProperty(object):
     optional_input_value_names = []
     optional_input_dimensionalities = []
 
-    def __init__(self):
+    def __init__(self, name=None):
         """
         DeviceProperty is a object that records a property of a specific electronic device property at
         a certain input condition.  For example, this could be the on-current of a transistor at a drain voltage of 1 V
@@ -66,6 +66,12 @@ class DeviceProperty(object):
         """
         self.prop_value = None
         self.input_values = {}
+        # save the name of the property
+        if name is None:
+            self.name = self.prop_name
+        else:
+            assert isinstance(name, str), 'The given name of the property must be a string'
+            self.name = name
 
     def __getitem__(self, item):
         """
@@ -130,4 +136,4 @@ class DeviceProperty(object):
                 self.input_values[optional_name] = input_value
 
     def __str__(self):
-        return '{0} at '.format(self.prop_value)
+        return '{0} = {1}'.format(self.name, self.prop_value)

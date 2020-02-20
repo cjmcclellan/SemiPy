@@ -12,7 +12,7 @@ from SemiPy.helper.plotting import create_scatter_plot
 
 class FETExtractor(Extractor):
 
-    def __init__(self, length, width, tox, epiox, device_polarity, idvd_path=None, idvg_path=None, *args, **kwargs):
+    def __init__(self, length, width, tox, epiox, device_polarity, vd_values=None, idvd_path=None, idvg_path=None, *args, **kwargs):
         """
         An extractor object for Field-Effect Transistors (FETs).  To get FET properties, IdVd, or IdVg data, use the FET, idvd, and idvg
         attributes.  Look at FET, IdVgDataSet, and IdVdDataSet classes for understanding how to use these attributes.
@@ -37,7 +37,7 @@ class FETExtractor(Extractor):
         if idvg_path is None:
             self.idvg = None
         else:
-            self.idvg = IdVgDataSet(data_path=idvg_path)
+            self.idvg = IdVgDataSet(data_path=idvg_path, secondary_independent_values=vd_values)
 
         if idvd_path is None:
             self.idvd = None
@@ -80,6 +80,8 @@ class FETExtractor(Extractor):
 
         # now compute the vt and gm using the max Vd
         vd = self.idvg.get_secondary_indep_values()
+        # adjust the shape to be [num_set, 1]
+        vd = Value.array_like(np.expand_dims(np.array(vd), axis=-1), unit=ureg.volt)
         max_vd = max(vd)
 
         vg = self.idvg.get_column('vg')
@@ -88,39 +90,25 @@ class FETExtractor(Extractor):
         # get the max and min Ion
         ion = self.idvg.get_column('id')
         max_ion, max_ion_i = self.FET.max_value(ion, return_index=True)
-        max_ion_vd = vd[max_ion_i[0]]
+        max_ion_vd = vd[max_ion_i[0], 0]
         max_ion_vg = vg[max_ion_i]
         self.FET.max_Ion.set(prop_value=max_ion, input_values={'Vg': max_ion_vg, 'Vd': max_ion_vd})
 
         # compute the gm
-        gm_bwd = self._slope(x_data=self.idvg.get_column('vg_bwd'),
-                             y_data=self.idvg.get_column('id_bwd'), keep_dims=True)
-
-        gm_fwd = self._slope(x_data=self.idvg.get_column('vg_fwd'),
-                             y_data=self.idvg.get_column('id_fwd'), keep_dims=True)
+        gm_fwd, max_gm_fwd, max_gm_fwd_i = self._extract_gm(fwd=True, return_max=True)
+        gm_bwd, max_gm_bwd, max_gm_bwd_i = self._extract_gm(bwd=True, return_max=True)
 
         gm = np.concatenate((gm_fwd, gm_bwd), axis=-1)
 
         self.idvg.add_column(column_name='gm', column_data=gm)
 
-        # get the max fwd and bwd gm and indexs
-        max_gm_fwd, max_gm_fwd_i = self.FET.max_slope_value(gm_fwd, return_index=True)
-        max_gm_bwd, max_gm_bwd_i = self.FET.max_slope_value(gm_bwd, return_index=True)
-
-        # if the max gm is the last point, then warn the user that the gm has not turned over and the Vt extraction may have error
-        if max_gm_fwd_i == gm_fwd.shape[0]:
-            warnings.warn('The transconductance (gm) has not reached maximum by Vd of {0} and Vg of {1}, meaning there will be error in '
-                          'the threshold voltage'.format(max_vd, max_vg))
-        if max_gm_bwd_i == 0:
-            warnings.warn('The transconductance (gm) has not reached maximum by Vd of {0} and Vg of {1}, meaning there will be error in '
-                          'the threshold voltage'.format(max_vd, max_vg))
         max_gm, max_gm_i = self.FET.max_slope_value(self.idvg.get_column(column_name='gm'), return_index=True)
-        max_gm_vd = vd[max_gm_i[0]]
+        max_gm_vd = vd[max_gm_i[0], 0]
         max_gm_input_values = {'Vg': self.idvg.get_column_set('vg', max_gm_vd)[max_gm_i[-1]], 'Vd': max_gm_vd}
 
         self.FET.max_gm.set(max_gm, max_gm_input_values)
 
-        # self.FET.max_gm_Vd = Value(max_vd, ureg.volt)
+        # Now extract the Vt values
         vt_fwd = self._extract_vt(index=max_gm_fwd_i, max_gm=max_gm_fwd, fwd=True)
         vt_bwd = self._extract_vt(index=max_gm_bwd_i, max_gm=max_gm_bwd, bwd=True)
 
@@ -135,6 +123,14 @@ class FETExtractor(Extractor):
         self.FET.min_ss = ss
 
         self.FET.compute_properties()
+
+        # now compute the carrier density
+        n = self.FET.vg_to_n(self.idvg.get_column('vg'))
+        self.idvg.add_column('n', n)
+
+        # now compute the resistance
+        r = vd / self.idvg.get_column('id')
+        self.idvg.add_column('resistance', r)
 
     # def extract_double_sweep(self, ):
 
@@ -151,8 +147,15 @@ class FETExtractor(Extractor):
         # if return max, then return the max and max_i
         if return_max:
             max_gm, max_gm_i = self.FET.max_slope_value(gm, return_index=True)
-            return gm, max_gm, max_gm_i
 
+            # now check if the max gm was reached before the final Vg point.  If so, then there could be error
+            vg = self.idvg.get_column('vg')
+            max_vg = self.FET.max_slope_value(vg)
+            if max_vg == vg[max_gm_i]:
+                warnings.warn('The transconductance (gm) has not reached maximum, potentially resulting in error'
+                              ' in extracting threshold voltage')
+
+            return gm, max_gm, max_gm_i
         else:
             return gm
 
@@ -194,19 +197,19 @@ class FETExtractor(Extractor):
             warnings.warn('Given length is not a value. Assuming units are micrometers.')
             length = Value(value=length, unit=ureg.micrometer)
         else:
-            assert length.unit == ureg.meter, 'Your length is not given in meters, but {0}.'.format(length.unit)
+            assert length.unit.dimensionality == ureg.meter.dimensionality, 'Your length is not given in meters, but {0}.'.format(length.unit.dimensionality)
 
         if not isinstance(width, Value):
             warnings.warn('Given width is not a value. Assuming units are micrometers.')
             width = Value(value=width, unit=ureg.micrometer)
         else:
-            assert width.unit == ureg.meter, 'Your length is not given in meters, but {0}.'.format(width.unit)
+            assert width.unit.dimensionality == ureg.meter.dimensionality, 'Your length is not given in meters, but {0}.'.format(width.unit.dimensionality)
 
         if not isinstance(tox, Value):
             warnings.warn('Given Tox is not a value. Assuming units are nanometers.')
             tox = Value(value=tox, unit=ureg.nanometer)
         else:
-            assert tox.unit == ureg.meter, 'Your length is not given in meters, but {0}.'.format(tox.unit)
+            assert tox.unit.dimensionality == ureg.meter.dimensionality, 'Your length is not given in meters, but {0}.'.format(tox.unit.dimensionality)
 
         if not isinstance(epiox, Value):
             epiox = Value(value=epiox)
