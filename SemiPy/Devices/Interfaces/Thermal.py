@@ -5,9 +5,9 @@ from SemiPy.Devices.BaseDevice import DeviceProperty
 from physics.value import ureg
 
 
-class ThermalConductivity(DeviceProperty):
+class ThermalBoundaryConductance(DeviceProperty):
 
-    prop_name = 'ThermalConductivity'
+    prop_name = 'ThermalBoundaryConductance'
     prop_dimensionality = ureg.watt / (ureg.meter * ureg.meter * ureg.kelvin)
 
     input_value_names = ['temperature']

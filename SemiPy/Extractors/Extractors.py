@@ -8,7 +8,7 @@ from physics.value import Value
 
 class Extractor(object):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
         Base class for data extractors
         Args:

@@ -18,10 +18,10 @@ class FETExtractor(Extractor):
         attributes.  Look at FET, IdVgDataSet, and IdVdDataSet classes for understanding how to use these attributes.
         Args:
             length (Value or float):  Physical length of the FET.  Should be a Value with correct units or float in micrometers.
-            width (Value or float): Physical length of the FET.  Should be a Value with correct units or float in micrometers.
+            width (Value or float): Physical width of the FET.  Should be a Value with correct units or float in micrometers.
             tox (Value or float): Physical thickness of the FET oxide.  Should be a Value with correct units or float in nanometers.
             epiox (Value or float): Dielectric constant of the oxide.  Should be a Value or float (unitless).
-            device_polarity (str): The polarity of the device, either 'n' or 'p' for elector or hole, respectively.
+            device_polarity (str): The polarity of the device, either 'n' or 'p' for electron or hole, respectively.
             idvd_path (str): Path to the IdVd data.
             idvg_path (str): Path to the IdVg data.
             *args:

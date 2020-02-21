@@ -2,6 +2,8 @@ import numpy as np
 from physics.fundamental_constants import free_space_permittivity_F_div_cm, electron_charge_C
 from SemiPy.Devices.BaseDevice import BaseDevice
 from SemiPy.Devices.FET.TransistorProperties import CurrentDensity, Transconductance, SubthresholdSwing, Voltage, Mobility
+from SemiPy.Devices.Interfaces.Electrical import ElectricalContactResistance
+from SemiPy.Devices.Interfaces.Thermal import ThermalBoundaryConductance
 from physics.helper import assert_value
 from physics.units import ureg
 from physics.value import Value
@@ -55,6 +57,12 @@ class FET(Transistor):
         self.Vt_avg = Voltage(name='Average Threshold Voltage')
         self.hysteresis = Voltage(name='Hysteresis')
         self.max_Ion = CurrentDensity(name='Maximum Current Density')
+        # TODO: Vt will depend on Vd.  How should I save that info and adjust for n
+
+        # add some interface properties
+        self.Rc = ElectricalContactResistance(name='metal contact resistance')
+        self.TBC = ThermalBoundaryConductance(name='oxide thermal boundary resistance')
+
         # self._max_Ion_Vd = None
         # self._max_Ion_F = None
         # self._max_Ion_Vg = None
@@ -105,63 +113,21 @@ class FET(Transistor):
         return Id/self.width
 
     def norm_Field(self, vd):
-        return vd/self.width
-
-    # def norm_Vg(self, vg):
-    #     return vg
+        return vd/self.width    # def max_Ion(self):
 
     def vg_to_n(self, vg):
-        assert self.Vt_avg.prop_value is not None,\
-            'You must calculate the average Vt by running FET.compute_properties() before computing the carrier density'
         # adding extra values to make the units be centimeter ** -2
-        n = Value(value=1.0, unit=ureg.coulomb) * self.Cox * (vg - self.Vt_avg.prop_value) / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
+        try:
+            # replace any Vg < Vt_avg with Vt_avg
+            vg[vg < self.Vt_avg.prop_value] = self.Vt_avg.prop_value
+            n = Value(value=1.0, unit=ureg.coulomb) * self.Cox * (vg - self.Vt_avg.prop_value)\
+                / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
+
+        except Exception as e:
+            assert self.Vt_avg.prop_value is not None, \
+                'You must calculate the average Vt by running FET.compute_properties() before computing the carrier density'
+            raise e
         return n
-
-    # @property
-    # def Vt_fwd(self):
-    #     return self._Vt_fwd
-    #
-    # @Vt_fwd.setter
-    # def Vt_fwd(self, _in):
-    #     assert_value(_in)
-    #     self._Vt_fwd = _in
-    #
-    # @property
-    # def Vt_bwd(self):
-    #     return self._Vt_bwd
-    #
-    # @Vt_bwd.setter
-    # def Vt_bwd(self, _in):
-    #     assert_value(_in)
-    #     self._Vt_bwd = _in
-
-    # @property
-    # def mobility(self):
-    #     return self._mobility
-    #
-    # @mobility.setter
-    # def mobility(self, _in):
-    #     assert_value(_in)
-    #     self._mobility = _in
-
-    # @property
-    # def max_gm(self):
-    #     return self._max_gm
-    #
-    # @max_gm.setter
-    # def max_gm(self, _in):
-    #     if isinstance(_in, np.ndarray):
-    #         _in = self.max_slope_value(_in)
-    #     self._max_gm.set(_in)
-
-    # @property
-    # def max_gm_Vd(self):
-    #     return self._max_gm_Vd
-    #
-    # @max_gm_Vd.setter
-    # def max_gm_Vd(self, _in):
-    #     assert_value(_in)
-    #     self._max_gm_Vd = _in
 
     @property
     def min_ss(self):
@@ -178,55 +144,6 @@ class FET(Transistor):
             _in = self.min_slope_value(_in)
         _in = _in.adjust_unit(ureg.meter * ureg.millivolt / ureg.amp)
         self._min_ss = _in
-
-    # @property
-    # def max_Ion(self):
-    #     return self._max_Ion
-    #
-    # @max_Ion.setter
-    # def max_Ion(self, _in):
-    #     assert_value(_in)
-    #     if _in.unit.dimensionality != ureg.amp/ureg.meter:
-    #         _in/self.width
-    #     self._max_Ion = _in
-    #
-    # @property
-    # def max_Ion_n(self):
-    #     return self._max_Ion_n
-    #
-    # @max_Ion_n.setter
-    # def max_Ion_n(self, _in):
-    #     assert_value(_in)
-    #     self._max_Ion_n = _in
-    #
-    # @property
-    # def max_Ion_Vd(self):
-    #     return self._max_Ion_Vd
-    #
-    # @max_Ion_Vd.setter
-    # def max_Ion_Vd(self, _in):
-    #     assert_value(_in)
-    #     self.max_Ion_F = self.norm_Field(_in)
-    #     self._max_Ion_Vd = _in
-    #
-    # @property
-    # def max_Ion_F(self):
-    #     return self._max_Ion_F
-    #
-    # @max_Ion_F.setter
-    # def max_Ion_F(self, _in):
-    #     assert_value(_in)
-    #     self._max_Ion_F = _in
-    #
-    # @property
-    # def max_Ion_Vg(self):
-    #     return self._max_Ion_Vg
-    #
-    # @max_Ion_Vg.setter
-    # def max_Ion_Vg(self, _in):
-    #     assert_value(_in)
-    #     self.max_Ion_n = self.vg_to_n(_in)
-    #     self._max_Ion_Vg = _in
 
     def max_value(self, array, return_index=False):
         raise NotImplementedError('You must implement max_value')
@@ -248,6 +165,7 @@ class FET(Transistor):
         # get the arg min of an array
         return np.unravel_index(np.argmin(array), array.shape)
 
+
 class NFET(FET):
 
     def __init__(self, *args, **kwargs):
@@ -255,7 +173,7 @@ class NFET(FET):
 
     def norm_Id(self, Id):
         # should not have to adjust anything
-        return super(NFET, self).norm_Id(Id)
+        return super(NFET, self).norm_Id(Id)   # @property
 
     def max_value(self, array, return_index=False):
         result = abs(array).max()
@@ -278,6 +196,7 @@ class NFET(FET):
 
 class PFET(FET):
 
+    # TODO: Need to think about adjusting the max Vg and max carrier density functions for PFET vs NFET
     def __init__(self, *args, **kwargs):
         super(PFET, self).__init__(*args, **kwargs)
 
@@ -313,3 +232,7 @@ class PFET(FET):
         if return_index:
             return result, self._arg_min(array)
         return result
+
+    def vg_to_n(self, vg):
+        # flip the sign of vg
+        super(PFET, self).vg_to_n(abs(vg))

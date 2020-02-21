@@ -53,7 +53,7 @@ class BaseDataSet(object):
         # loop th  rough all the column names
         for i in range(len(self.column_names)):
             # if no column name was given, then try to use common column names
-            if given_column_names[i] is None:
+            if given_column_names is None or given_column_names[i] is None:
                 names = self._find_similar_column(common_column_names[i])
             else:
                 names = self._find_similar_column(given_column_names[i])
@@ -276,6 +276,9 @@ class SetDataSet(BaseDataSet):
             # else remove all the data from that set
             else:
                 self.remove_column(column_name=[columns[index] for columns in self.gathered_column_names.values() if columns is not None])
+
+        # count the number of sets
+        self.num_secondary_indep_sets = len(self.secondary_indep_values.keys())
 
     def __assert_secondary_value(self, value):
         assert value in self.secondary_indep_values.keys(),\
