@@ -10,7 +10,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash_cjm.named_components import NamedDropdown, NamedInput
-from SemiPy.Extractors.FETExtractor import FETExtractor
+from SemiPy.Extractors.Transistor.FETExtractor import FETExtractor
 import numpy as np
 
 from SemiPy.helper.math import round_to_n
@@ -120,26 +120,28 @@ class IVExtractionApp(StaticPlotting2DApp):
 
         # if the uploaded-data is not None, then start the extraction
         if kwargs['uploaded-data'] is not None:
-            try:
-                test = FETExtractor(width=kwargs['width'], length=kwargs['length'], tox=kwargs['tox'],
-                                    epiox=kwargs['dielectric'], device_polarity='n', idvg_path=kwargs['uploaded-data'])
+            test = FETExtractor(width=kwargs['width'], length=kwargs['length'], tox=kwargs['tox'],
+                                epiox=kwargs['dielectric'], device_polarity='n', idvg_path=kwargs['uploaded-data'])
 
-                table_list = [(IVExtractionApp.output_values['Vt_fwd'], round_to_n(test.FET.Vt_fwd, 3)),
-                              (IVExtractionApp.output_values['Vt_bwd'], round_to_n(test.FET.Vt_bwd, 3)),
-                              (IVExtractionApp.output_values['mobility'], round_to_n(test.FET.mobility, 3)),
-                              (IVExtractionApp.output_values['max_gm'], round_to_n(test.FET.max_gm, 3)),
-                              (IVExtractionApp.output_values['min_ss'], round_to_n(test.FET.min_ss, 3))]
+            print('created FET')
 
-                output_table = [{'output_name': name, 'output_value': value} for name, value in table_list]
+            table_list = [(IVExtractionApp.output_values['Vt_fwd'], round_to_n(test.FET.Vt_fwd.prop_value, 3)),
+                          (IVExtractionApp.output_values['Vt_bwd'], round_to_n(test.FET.Vt_bwd.prop_value, 3)),
+                          (IVExtractionApp.output_values['mobility'], round_to_n(test.FET.max_mobility.prop_value, 3)),
+                          (IVExtractionApp.output_values['max_gm'], round_to_n(test.FET.max_gm.prop_value, 3)),
+                          (IVExtractionApp.output_values['min_ss'], round_to_n(test.FET.min_ss, 3))]
 
-                result = {IVExtractionApp.x_options['id']: test.idvg.get_column('id'),
-                          IVExtractionApp.x_options['vg']: test.idvg.get_column('vg'),
-                          IVExtractionApp.x_options['ss']: test.idvg.get_column('ss'),
-                          'class': ['Vd = {0}'.format(val) for val in test.idvg.get_secondary_indep_values()],
-                          'output_table': output_table}
-            except Exception:
-                result = {IVExtractionApp.x_options['id']: np.array([[1]]), IVExtractionApp.x_options['vg']: np.array([[1]]),
-                          'class': ['In'], 'output_table': IVExtractionApp.data_table_default_data}
+            output_table = [{'output_name': name, 'output_value': value} for name, value in table_list]
+
+            result = {IVExtractionApp.x_options['id']: test.idvg.get_column('id'),
+                      IVExtractionApp.x_options['vg']: test.idvg.get_column('vg'),
+                      IVExtractionApp.x_options['ss']: test.idvg.get_column('ss'),
+                      'class': ['Vd = {0}'.format(val) for val in test.idvg.get_secondary_indep_values()],
+                      'output_table': output_table}
+            # except Exception:
+            #     print('found issue')
+            #     result = {IVExtractionApp.x_options['id']: np.array([[1]]), IVExtractionApp.x_options['vg']: np.array([[1]]),
+            #               'class': ['In'], 'output_table': IVExtractionApp.data_table_default_data}
         else:
             result = {IVExtractionApp.x_options['id']: np.array([[1]]), IVExtractionApp.x_options['vg']: np.array([[1]]),
                       'class': ['In'], 'output_table': IVExtractionApp.data_table_default_data}

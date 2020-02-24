@@ -34,17 +34,14 @@ class BiDirectionalDataSet(SetDataSet):
         # now divide the data into fwd, bwd sweeps, if they exist
         # get the args where the master independent changes sign.  If there are multiple for each row, raise an error
         # change_i = np.argwhere(np.diff(np.array(self.get_column(self.master_independent), dtype=np.float)) == 0.0)
-        _in = np.array(self.get_column(self.master_independent), dtype=np.float)
-        # this formula will find the point of change in sweep direction accounting for duplicate final points i.e. Vg = [1, 2, 3, 3, 2, 1] => change_i = [2]
-        change_i = np.argwhere(np.abs(np.diff(np.sign(_in[..., 2:] - _in[..., :-2]))) == 2.0) + 1
-
+        change_i = self._get_sweep_index()
         self.sweep_number = ((change_i.shape[0]) / self.num_secondary_indep_sets) + 1
         assert self.sweep_number < 3, 'IV sweeps can only have a single direction or a forward and backward.' \
                                       '  Yours has {0} sweep directions'.format(self.sweep_number)
 
         assert np.all(change_i[:, 1] == change_i[1, 1]), 'All IV sweeps must have the same number of x data points'
         # now save the change point
-        self.change_i = change_i[1, 1] + 1
+        self.change_i = change_i[1, 1]
 
         # now convert the secondary independents to values
         self._convert_secondary_independent_to_value()
@@ -54,9 +51,27 @@ class BiDirectionalDataSet(SetDataSet):
             if self.gathered_column_names[column] is not None and not isinstance(self.get_column(column).flat[0], Value):
                 self.adjust_column(column, func=self._convert_to_value(unit=unit))
 
-    def _convert_to_value(self, unit):
+    @staticmethod
+    def _convert_to_value(unit):
         # creates a lambda function for converting values to a unit
         return lambda x: Value.array_like(x, unit=unit)
+
+    def _get_sweep_index(self, array=None):
+        """
+        Get the index where the sweep direction changes
+        Args:
+            array (np.ndarray): Defaults to the master_independent column data unless a different array is givem
+
+        Returns:
+            np.ndarray with all the index points of change in sweep direction
+        """
+        if array is None:
+            array = np.array(self.get_column(self.master_independent), dtype=np.float)
+        else:
+            array = np.array(array, dtype=np.float)
+        # this formula will find the point of change in sweep direction accounting for duplicate final points i.e. Vg = [1, 2, 3, 3, 2, 1] => change_i = [2]
+        change_i = np.argwhere(np.abs(np.diff(np.sign(array[..., 2:] - array[..., :-2]))) == 2.0) + 1
+        return change_i + 1
 
     def _check_fwd_bwd(self, column_name):
         # check if fwd or bwd are in the column name
@@ -73,15 +88,33 @@ class BiDirectionalDataSet(SetDataSet):
         else:
             return column_name, False, False
 
-    def get_column(self, column_name, return_set_values=False):
+    def get_column(self, column_name, return_set_values=False, master_independent_value_range=None):
+        """
+
+        Args:
+            column_name:
+            return_set_values:
+            master_independent_value_range (list or None): List of range of desired values.
+
+        Returns:
+
+        """
         # add logic to deal with fwd and bwd requests
         column_name, fwd, bwd = self._check_fwd_bwd(column_name)
-        column_data = super(BiDirectionalDataSet, self).get_column(column_name, return_set_values)
 
+        column_data = super(BiDirectionalDataSet, self).get_column(column_name, return_set_values,
+                                                                   master_independent_value_range)
+        # if the column was indexed, we need to locate the new inflection point
+        if master_independent_value_range is not None and (fwd or bwd):
+            change_i = self._get_sweep_index(array=super(BiDirectionalDataSet, self).get_column(self.master_independent,
+                                                                                                False, master_independent_value_range))
+            change_i = change_i[1, 1]
+        elif fwd or bwd:
+            change_i = self.change_i
         if fwd:
-            column_data = column_data[..., :self.change_i]
+            column_data = column_data[..., :change_i]
         elif bwd:
-            column_data = column_data[..., self.change_i:]
+            column_data = column_data[..., change_i:]
 
         return column_data
 

@@ -47,6 +47,7 @@ class FETExtractor(Extractor):
         # now check the given properties
         length, width, tox, epiox = self.__check_properties(length, width, tox, epiox)
 
+        print('creating FET')
         # now create the FET model
         if device_polarity is 'p':
             self.FET = PFET(length=length, width=width, tox=tox, dielectric_const=epiox)
@@ -60,7 +61,7 @@ class FETExtractor(Extractor):
         # now normalize all the data in idvg and idvd
         adjust_current = lambda x: self.FET.norm_Id(x)
         # adjust_volt = lambda x: Value.array_like(x, unit=ureg.volt)
-
+        print('adjusting Id')
         if self.idvg is not None:
             self.idvg.adjust_column('id', func=adjust_current)
 
@@ -77,7 +78,7 @@ class FETExtractor(Extractor):
         Returns:
             None
         """
-
+        print('starting extraction')
         # now compute the vt and gm using the max Vd
         vd = self.idvg.get_secondary_indep_values()
         # adjust the shape to be [num_set, 1]
@@ -107,7 +108,7 @@ class FETExtractor(Extractor):
         max_gm_input_values = {'Vg': self.idvg.get_column_set('vg', max_gm_vd)[max_gm_i[-1]], 'Vd': max_gm_vd}
 
         self.FET.max_gm.set(max_gm, max_gm_input_values)
-
+        print('set gm')
         # Now extract the Vt values
         vt_fwd = self._extract_vt(index=max_gm_fwd_i, max_gm=max_gm_fwd, fwd=True)
         vt_bwd = self._extract_vt(index=max_gm_bwd_i, max_gm=max_gm_bwd, bwd=True)
@@ -122,12 +123,17 @@ class FETExtractor(Extractor):
         self.idvg.add_column(column_name='ss', column_data=ss)
         self.FET.min_ss = ss
 
+        print('computing properties')
+
         self.FET.compute_properties()
+
+        print('adjusting n')
 
         # now compute the carrier density
         n = self.FET.vg_to_n(self.idvg.get_column('vg'))
         self.idvg.add_column('n', n)
 
+        print('adding r')
         # now compute the resistance
         r = vd / self.idvg.get_column('id')
         self.idvg.add_column('resistance', r)

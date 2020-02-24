@@ -141,12 +141,12 @@ class BaseDataSet(object):
                     columns.remove(column_name)
                     self.gathered_column_names[key] = columns
 
-    def get_column(self, column_name):
+    def get_column(self, column_name, master_independent_value_range=None):
         """
         Get the column of the column_name
         Args:
             column_name (str): The name of the desired column.  Should be in the self.column_names list
-
+            master_independent_value_range (list):
         Returns:
             np.ndarray column data
         """
@@ -154,7 +154,26 @@ class BaseDataSet(object):
 
         self.__assert_valid_column_name(column_name)
 
-        return self.df[self._get_colmun_names(column_name)].to_numpy()
+        result = self.df[self._get_colmun_names(column_name)].to_numpy()
+        if master_independent_value_range is not None:
+            master_column = self.df[self._get_colmun_names(self.master_independent)].to_numpy()
+            # now get the bool array
+            master_bool = np.logical_and(np.array(master_column, dtype=np.float) <= master_independent_value_range[1],
+                                         np.array(master_column, dtype=np.float) >= master_independent_value_range[0])
+            # now make sure the resulting array is square, otherwise raise an error
+            dim = np.sum(master_bool[:, 0] * 1)
+            num_columns = master_bool.shape[1]
+            for i in range(master_bool.shape[-1]):
+                assert dim == np.sum(master_bool[:, i] * 1),\
+                    "The indexing the column {0} by the master independent value range given {1} has resulted in a" \
+                    " non rectangular array.  Make sure that all {2} master independent columns have the same number" \
+                    " of data points for the given master independent value range".format(column_name,
+                                                                                          master_independent_value_range,
+                                                                                          self.master_independent)
+            # now index the array
+            result = np.transpose(np.array([result[master_bool[:, i], i] for i in range(result.shape[-1])]))
+            # result = np.transpose(np.reshape(result[master_bool], newshape=(num_columns, dim)))
+        return result
 
     def _get_colmun_names(self, column_name):
         # # first look if the column name is in the super gathered names list.
@@ -289,7 +308,7 @@ class SetDataSet(BaseDataSet):
     # def add_super_set(self, set_name, set_values):
     #     # same as DataSet, but adds the
 
-    def get_column(self, column_name, return_set_values=False):
+    def get_column(self, column_name, return_set_values=False, master_independent_value_range=None):
         """
 
         Args:
@@ -300,7 +319,7 @@ class SetDataSet(BaseDataSet):
             np.ndarray
         """
         # same as super class, just make sure the shape is column, row not row, column
-        column_data = np.transpose(super(SetDataSet, self).get_column(column_name))
+        column_data = np.transpose(super(SetDataSet, self).get_column(column_name, master_independent_value_range))
         if return_set_values:
             return column_data, list([key for key in self.secondary_indep_values.keys()
                                       if self.gathered_column_names[column_name]])
@@ -362,7 +381,7 @@ class SetDataSet(BaseDataSet):
         # only grab columns from that set.
         columns = self.__get_column_name_secondary_value(column_name, secondary_value)
         result = self.df[columns].to_numpy()
-        assert result.shape[1] == 1, 'You are attempting to grab mutliple columns for a single secondary_value, which should not be' \
+        assert result.shape[1] == 1, 'You are attempting to grab multiple columns for a single secondary_value, which should not be' \
                                      ' possible.  You have found a bug, congrats.  Please report'
         return result[:, 0]
 

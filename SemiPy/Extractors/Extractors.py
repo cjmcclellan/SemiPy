@@ -85,6 +85,79 @@ class Extractor(object):
     def extract_data(self):
         raise NotImplementedError('You must implement the extract_data function for the Extractor')
 
+    def linear_regression(self, x_data, y_data):
+        """
+        Simple function for linear regression to a dataset.
+        Args:
+            x_data (np.ndarray): A 1 or 2D ndarray with the x data.  See y_data for 2D array details.
+            y_data (np.ndarray): A 1 or 2D ndarray with the y data.  If 2D, then the first dimension will serve as the
+             dataset and second dim as each individual dataset
+
+        Returns:
+            slope, slope error, x-intercept, x-intercept error
+        """
+
+        i_len = 100
+        # using x and y values as means, create normal distributions using the provided std's
+        # x_normal = np.array([np.random.normal(mean, std * 0, 1) for std, mean in zip(self.x_std, self.x)]).flatten()
+        # y_normal = np.array([np.random.normal(mean, std * 0, 1) for std, mean in zip(self.y_std, self.y)]).flatten()
+
+        # if x_data and y_data are 2D arrays, then loop over the second dim, using the first dim as the dataset
+        if len(x_data.shape) is 2 and len(y_data.shape) is 2:
+            a = []
+            a_error = []
+            b = []
+            b_error = []
+            for i in range(x_data.shape[1]):
+                a_t, a_e_t, b_t, b_e_t = self.__compute_linear_regression(x_data[:, i], y_data[:, i])
+                a.append(a_t)
+                a_error.append(a_e_t)
+                b.append(b_t)
+                b_error.append(b_e_t)
+        elif len(x_data.shape) is 1 and len(y_data.shape) is 1:
+            a, a_error, b, b_error = self.__compute_linear_regression(x_data, y_data)
+        else:
+            raise ValueError('Your x_data and y_data dimensions are off.  x_data is {0} and y_data {1}, but they'
+                             ' must have the same shape and either have 1 or 2 dimensions')
+
+        return a, a_error, b, b_error
+        # for i in range(i_len):
+        #     x_normal = np.array([np.random.normal(mean, std, 1) for std, mean in zip(self.x_std, self.x)]).flatten()
+        #     y_normal = np.array([np.random.normal(mean, std, 1) for std, mean in zip(self.y_std, self.y)]).flatten()
+        #
+        #     # fit the data using np.polyfit with 1
+        #     p, V = np.polyfit(x_normal, y_normal, 1, cov=True)
+        #     # self.a_avg += p[0]
+        #     # self.b_avg += p[1]
+        #     self.a_error_avg += slope_holder.unit_copy(np.sqrt(V[0][0]))
+        #     self.b_error_avg += self.y[0].unit_copy(np.sqrt(V[1][1]))
+        # # compute the averages
+        # # self.a_avg /= i_len + 1
+        # self.a_error_avg = (self.a_error_avg / (i_len + 1))
+        # # self.b_avg /= i_len + 1
+        # self.b_error_avg = (self.b_error_avg / (i_len + 1))
+
+        # return self.a_avg, self.a_error_avg, self.b_avg, self.b_error_avg
+
+    def __compute_linear_regression(self, x_data, y_data):
+        assert x_data.shape == y_data.shape, 'The x_data and y_data must have the same shape, but they' \
+                                             ' are {0} and {1}.'.format(x_data.shape, y_data.shape)
+        x_normal = np.array(x_data, dtype=float)
+        y_normal = np.array(y_data, dtype=float)
+        slope_holder = x_data[0] / y_data[0]
+
+        # fit the data using np.polyfit with 1 for more than two points
+        if x_data.shape[0] == 2:
+            order = 0
+        else:
+            order = 1
+        p, V = np.polyfit(x_normal, y_normal, order, cov=True)
+        a_avg = slope_holder.unit_copy(p[0])
+        b_avg = y_data[0].unit_copy(p[1])
+        a_error_avg = slope_holder.unit_copy(np.sqrt(V[0][0]))
+        b_error_avg = y_data[0].unit_copy(np.sqrt(V[1][1]))
+        return a_avg, a_error_avg, b_avg, b_error_avg
+
 
 class TrendLine(object):
 
@@ -128,3 +201,4 @@ class TrendLine(object):
         # y_trend = np.exp([fit[0]*x**1 + fit[1]*x**0 for x in x_log])
         self.y_trend = self.compute_fit(self.x_trend)
         # self.y_trend = np.power([10 for x in self.x_trend], [self.compute_fit(x) for x in self.x_trend])
+

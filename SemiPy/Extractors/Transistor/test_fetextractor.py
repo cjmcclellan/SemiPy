@@ -20,7 +20,6 @@ class TestFETExtractors(unittest.TestCase):
                               device_polarity='n', idvg_path=idvg_path, idvd_path=idvd_path)
 
 
-
         a = 5
 
 

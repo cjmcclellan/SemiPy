@@ -39,7 +39,8 @@ class TLMExtractor(Extractor):
 
         for root, dirs, idvg_data in os.walk(idvg_path):
             # make sure there are lengths for each data file
-            assert len(lengths) == len(idvg_data), 'There are too many or too few channel lengths given for the data.'
+            assert len(lengths) == len(idvg_data), 'There are too many or too few channel' \
+                                                   ' lengths given for the data. ({0})'.format(idvg_data)
             for i, idvg in enumerate(idvg_data):
                 path = os.path.join(root, idvg)
                 self.FETs.append(FETExtractor(width=widths, length=lengths[i], epiox=epiox, tox=tox,
@@ -55,7 +56,7 @@ class TLMExtractor(Extractor):
                     'The IdVg data at {0} for this TLM does not have consistent Vd values.' \
                     '  Make sure that all the Vd values are the same for every dataset'.format(idvg_path)
 
-                # grab the n and resistances
+                # grab the n and resistances and create the l column
                 self.data_dict['n'].append(self.FETs[-1].idvg.get_column('n'))
                 self.n_max.append(np.max(self.data_dict['n'][-1], axis=-1))
                 self.data_dict['r'].append(self.FETs[-1].idvg.get_column('resistance'))
@@ -74,11 +75,18 @@ class TLMExtractor(Extractor):
 
             # now we can start computing TLM properties
             min_max_n = np.min(np.array(self.n_max)[:, i])
-            n_fwd = new_dataset.get_column('n')
-            nearest_max_n_i = find_nearest_arg(n, min_max_n, axis=-1)
+            n_full = new_dataset.get_column('n')
+            # grab the min max of n and the max min of n
+            min_max_n = np.min(np.max(n_full, axis=1))
+            max_min_n = np.max([np.min(n_full[i][np.where(n_full[i, :] >= 1.0)[0]]) for i in range(n_full.shape[0])])
+            n = new_dataset.get_column('n', master_independent_value_range=[max_min_n, min_max_n.value])
+            r = new_dataset.get_column('r', master_independent_value_range=[max_min_n, min_max_n.value])
+            l = new_dataset.get_column('l', master_independent_value_range=[max_min_n, min_max_n.value])
+
+            self.linear_regression(l, r)
 
             # now get the range of n
-            above_zero_i =
+            # above_zero_i =
 
             a = 5
 
