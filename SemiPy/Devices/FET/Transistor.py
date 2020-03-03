@@ -12,19 +12,19 @@ from os.path import join
 
 
 class Transistor(BaseDevice):
+    """
+
+    Args:
+        width (physics.Value): The width of the device.
+        length (physics.Value): The length of the device.
+        *args:
+        **kwargs:
+    Example::
+
+    """
 
     def __init__(self, width, length, *args, **kwargs):
-        """
 
-        Args:
-            width (physics.Value): The width of the device.
-            length (physics.Value): The length of the device.
-            *args:
-            **kwargs:
-        Example::
-
-
-        """
         super(Transistor, self).__init__(*args, **kwargs)
 
         assert isinstance(width, Value), 'The width must be of type value.'
@@ -40,6 +40,14 @@ class Transistor(BaseDevice):
 class FET(Transistor):
 
     def __init__(self, dielectric_const, tox, *args, **kwargs):
+        """
+
+        Args:
+            dielectric_const:
+            tox:
+            *args:
+            **kwargs:
+        """
         super(FET, self).__init__(*args, **kwargs)
         # save the FET parameters
         self.dielectric_const = dielectric_const
@@ -97,15 +105,15 @@ class FET(Transistor):
         """
         # first hysteresis, then mobility
         if self.Vt_bwd is not None and self.Vt_fwd is not None:
-            self.hysteresis.set(self.Vt_fwd.prop_value - self.Vt_bwd.prop_value)
-            self.Vt_avg.set((self.Vt_fwd.prop_value + self.Vt_bwd.prop_value) / 2.0)
+            self.hysteresis.set(self.Vt_fwd.value - self.Vt_bwd.value)
+            self.Vt_avg.set((self.Vt_fwd.value + self.Vt_bwd.value) / 2.0)
         elif self.Vt_fwd is not None:
             self.Vt_avg = self.Vt_fwd
         elif self.Vt_bwd is not None:
             self.Vt_avg = self.Vt_bwd
 
-        if self.Cox is not None and self.max_gm.prop_value is not None and self.length is not None:
-            mobility = self.length * self.max_gm.prop_value / (self.Cox * self.max_gm['Vd'])
+        if self.Cox is not None and self.max_gm.value is not None and self.length is not None:
+            mobility = self.length * self.max_gm.value / (self.Cox * self.max_gm['Vd'])
             mobility = mobility.adjust_unit(ureg.centimeter * ureg.centimeter / (ureg.volt * ureg.second))
             self.max_mobility.set(mobility, {'Vg': self.max_gm['Vg'], 'Vd': self.max_gm['Vd']})
 
@@ -119,12 +127,12 @@ class FET(Transistor):
         # adding extra values to make the units be centimeter ** -2
         try:
             # replace any Vg < Vt_avg with Vt_avg
-            vg[vg < self.Vt_avg.prop_value] = self.Vt_avg.prop_value
-            n = Value(value=1.0, unit=ureg.coulomb) * self.Cox * (vg - self.Vt_avg.prop_value)\
+            vg[vg < self.Vt_avg.value] = self.Vt_avg.value
+            n = Value(value=1.0, unit=ureg.coulomb) * self.Cox * (vg - self.Vt_avg.value)\
                 / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
 
         except Exception as e:
-            assert self.Vt_avg.prop_value is not None, \
+            assert self.Vt_avg.value is not None, \
                 'You must calculate the average Vt by running FET.compute_properties() before computing the carrier density'
             raise e
         return n

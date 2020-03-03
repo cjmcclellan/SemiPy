@@ -1,5 +1,6 @@
 """
-Extractor for extracting information of Field-Effect Transistors from IdVg and IdVd data sets
+Extractor for extracting information of Field-Effect Transistors from IdVg and IdVd data sets.
+
 """
 from SemiPy.Extractors.Extractors import Extractor
 from SemiPy.Datasets.IVDataset import IdVgDataSet, IdVdDataSet
@@ -12,21 +13,37 @@ from SemiPy.helper.plotting import create_scatter_plot
 
 class FETExtractor(Extractor):
 
+    """
+    An extractor object for Field-Effect Transistors (FETs).  To get FET properties, IdVd, or IdVg data, use the FET, idvd, and idvg
+    attributes.  Look at FET, IdVgDataSet, and IdVdDataSet classes for understanding how to use these attributes.
+
+    Args:
+        length (Value or float):  Physical length of the FET.  Should be a Value with correct units or float in micrometers.
+        width (Value or float): Physical width of the FET.  Should be a Value with correct units or float in micrometers.
+        tox (Value or float): Physical thickness of the FET oxide.  Should be a Value with correct units or float in nanometers.
+        epiox (Value or float): Dielectric constant of the oxide.  Should be a Value or float (unitless).
+        device_polarity (str): The polarity of the device, either 'n' or 'p' for electron or hole, respectively.
+        idvd_path (str): Path to the IdVd data.
+        idvg_path (str): Path to the IdVg data.
+
+    Attributes:
+        FET: A SemiPy.Devices.FET.Transistor.Transistor instance.
+        idvd: A SemiPy.Datasets.IVDataset.IdVdDataSet instance of the Id Vd data
+        idvg: A SemiPy.Datasets.IVDataset.IdVgDataSet instance of the Id Vg data
+
+    Examples:
+        >>> from physics.value import Value, ureg
+        # idvg_path and idvd_path point to a xls, csv, or txt where IdVg and IdVd data files are.
+        >>> width = Value(1.0, ureg.micrometer)
+        >>> length = Value(1.0, ureg.micrometer)
+        >>> tox = Value(30.0, ureg.nanometer)
+        >>> fetdata = FETExtractor(width=width, length=length, tox=tox, epiox=3.9, device_polarity='n', idvg_path=idvg_path, idvd_path=idvd_path)
+        # access the extracted FET information.  See SemiPy.Devices.FET.Transistor.Transistor for full list of properties
+        >>> print(fetdata.FET.max_gm)
+        maximum transconductance = 3e-6 ampere / micrometer / volt
+    """
+
     def __init__(self, length, width, tox, epiox, device_polarity, vd_values=None, idvd_path=None, idvg_path=None, *args, **kwargs):
-        """
-        An extractor object for Field-Effect Transistors (FETs).  To get FET properties, IdVd, or IdVg data, use the FET, idvd, and idvg
-        attributes.  Look at FET, IdVgDataSet, and IdVdDataSet classes for understanding how to use these attributes.
-        Args:
-            length (Value or float):  Physical length of the FET.  Should be a Value with correct units or float in micrometers.
-            width (Value or float): Physical width of the FET.  Should be a Value with correct units or float in micrometers.
-            tox (Value or float): Physical thickness of the FET oxide.  Should be a Value with correct units or float in nanometers.
-            epiox (Value or float): Dielectric constant of the oxide.  Should be a Value or float (unitless).
-            device_polarity (str): The polarity of the device, either 'n' or 'p' for electron or hole, respectively.
-            idvd_path (str): Path to the IdVd data.
-            idvg_path (str): Path to the IdVg data.
-            *args:
-            **kwargs:
-        """
 
         super(FETExtractor, self).__init__(*args, **kwargs)
 
@@ -47,7 +64,7 @@ class FETExtractor(Extractor):
         # now check the given properties
         length, width, tox, epiox = self.__check_properties(length, width, tox, epiox)
 
-        print('creating FET')
+        # print('creating FET')
         # now create the FET model
         if device_polarity is 'p':
             self.FET = PFET(length=length, width=width, tox=tox, dielectric_const=epiox)
@@ -93,7 +110,7 @@ class FETExtractor(Extractor):
         max_ion, max_ion_i = self.FET.max_value(ion, return_index=True)
         max_ion_vd = vd[max_ion_i[0], 0]
         max_ion_vg = vg[max_ion_i]
-        self.FET.max_Ion.set(prop_value=max_ion, input_values={'Vg': max_ion_vg, 'Vd': max_ion_vd})
+        self.FET.max_Ion.set(value=max_ion, input_values={'Vg': max_ion_vg, 'Vd': max_ion_vd})
 
         # compute the gm
         gm_fwd, max_gm_fwd, max_gm_fwd_i = self._extract_gm(fwd=True, return_max=True)
@@ -108,7 +125,7 @@ class FETExtractor(Extractor):
         max_gm_input_values = {'Vg': self.idvg.get_column_set('vg', max_gm_vd)[max_gm_i[-1]], 'Vd': max_gm_vd}
 
         self.FET.max_gm.set(max_gm, max_gm_input_values)
-        print('set gm')
+        # print('set gm')
         # Now extract the Vt values
         vt_fwd = self._extract_vt(index=max_gm_fwd_i, max_gm=max_gm_fwd, fwd=True)
         vt_bwd = self._extract_vt(index=max_gm_bwd_i, max_gm=max_gm_bwd, bwd=True)
@@ -123,17 +140,17 @@ class FETExtractor(Extractor):
         self.idvg.add_column(column_name='ss', column_data=ss)
         self.FET.min_ss = ss
 
-        print('computing properties')
+        # print('computing properties')
 
         self.FET.compute_properties()
 
-        print('adjusting n')
+        # print('adjusting n')
 
         # now compute the carrier density
         n = self.FET.vg_to_n(self.idvg.get_column('vg'))
         self.idvg.add_column('n', n)
 
-        print('adding r')
+        # print('adding r')
         # now compute the resistance
         r = vd / self.idvg.get_column('id')
         self.idvg.add_column('resistance', r)

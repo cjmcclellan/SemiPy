@@ -1,7 +1,7 @@
-Extractions
-===========
+SemiPy
+======
 
 .. toctree::
    :maxdepth: 4
 
-   Extractions
+   SemiPy

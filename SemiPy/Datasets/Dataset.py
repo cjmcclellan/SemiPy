@@ -146,7 +146,9 @@ class BaseDataSet(object):
         Get the column of the column_name
         Args:
             column_name (str): The name of the desired column.  Should be in the self.column_names list
-            master_independent_value_range (list):
+            master_independent_value_range (list): Range of min and max values of the master independent to be indexed.  For each master
+             independent column, values between the value closest to min and max will be indexed.  If min is 2.1 and the master independent
+             is 1.0, 2.0, 3.0, the values greater than 2.0 will be indexed
         Returns:
             np.ndarray column data
         """
@@ -157,22 +159,30 @@ class BaseDataSet(object):
         result = self.df[self._get_colmun_names(column_name)].to_numpy()
         if master_independent_value_range is not None:
             master_column = self.df[self._get_colmun_names(self.master_independent)].to_numpy()
+            # find the values in each column closest to the min and max values
+            max_index = np.argmin(np.abs(master_column - np.ones(shape=(master_column.shape[-1],)) * master_independent_value_range[1]), axis=0)
+            min_index = np.argmin(np.abs(master_column - np.ones(shape=(master_column.shape[-1],)) * master_independent_value_range[0]), axis=0)
             # now get the bool array
-            master_bool = np.logical_and(np.array(master_column, dtype=np.float) <= master_independent_value_range[1],
-                                         np.array(master_column, dtype=np.float) >= master_independent_value_range[0])
-            # now make sure the resulting array is square, otherwise raise an error
-            dim = np.sum(master_bool[:, 0] * 1)
-            num_columns = master_bool.shape[1]
-            for i in range(master_bool.shape[-1]):
-                assert dim == np.sum(master_bool[:, i] * 1),\
+            # master_bool = np.logical_and(np.array(master_column, dtype=np.float) <= master_independent_value_range[1],
+            #                              np.array(master_column, dtype=np.float) >= master_independent_value_range[0])
+            # # now make sure the resulting array is square, otherwise raise an error
+            dim = max_index[0] - min_index[0]
+            # num_columns = master_bool.shape[1]
+            # for i in range(master_bool.shape[-1]):
+            temp_result = []
+            for i in range(max_index.shape[0]):
+                assert max_index[i] - min_index[i] == dim,\
                     "The indexing the column {0} by the master independent value range given {1} has resulted in a" \
                     " non rectangular array.  Make sure that all {2} master independent columns have the same number" \
                     " of data points for the given master independent value range".format(column_name,
                                                                                           master_independent_value_range,
                                                                                           self.master_independent)
+                temp_result.append(result[min_index[i]:max_index[i], i])
             # now index the array
-            result = np.transpose(np.array([result[master_bool[:, i], i] for i in range(result.shape[-1])]))
+
+            # result = np.transpose(np.array([result[master_bool[:, i], i] for i in range(result.shape[-1])]))
             # result = np.transpose(np.reshape(result[master_bool], newshape=(num_columns, dim)))
+            result = np.transpose(np.array(temp_result))
         return result
 
     def _get_colmun_names(self, column_name):

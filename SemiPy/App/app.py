@@ -125,10 +125,10 @@ class IVExtractionApp(StaticPlotting2DApp):
 
             print('created FET')
 
-            table_list = [(IVExtractionApp.output_values['Vt_fwd'], round_to_n(test.FET.Vt_fwd.prop_value, 3)),
-                          (IVExtractionApp.output_values['Vt_bwd'], round_to_n(test.FET.Vt_bwd.prop_value, 3)),
-                          (IVExtractionApp.output_values['mobility'], round_to_n(test.FET.max_mobility.prop_value, 3)),
-                          (IVExtractionApp.output_values['max_gm'], round_to_n(test.FET.max_gm.prop_value, 3)),
+            table_list = [(IVExtractionApp.output_values['Vt_fwd'], round_to_n(test.FET.Vt_fwd.value, 3)),
+                          (IVExtractionApp.output_values['Vt_bwd'], round_to_n(test.FET.Vt_bwd.value, 3)),
+                          (IVExtractionApp.output_values['mobility'], round_to_n(test.FET.max_mobility.value, 3)),
+                          (IVExtractionApp.output_values['max_gm'], round_to_n(test.FET.max_gm.value, 3)),
                           (IVExtractionApp.output_values['min_ss'], round_to_n(test.FET.min_ss, 3))]
 
             output_table = [{'output_name': name, 'output_value': value} for name, value in table_list]

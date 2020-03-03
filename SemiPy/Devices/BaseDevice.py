@@ -64,7 +64,7 @@ class DeviceProperty(object):
         a certain input condition.  For example, this could be the on-current of a transistor at a drain voltage of 1 V
         and gate voltage of 2 V
         """
-        self.prop_value = None
+        self.value = None
         self.input_values = {}
         # save the name of the property
         if name is None:
@@ -83,35 +83,38 @@ class DeviceProperty(object):
             Value
         """
         if item == self.prop_name:
-            return self.prop_value
+            return self.value
         elif item in self.input_value_names or item in self.optional_input_value_names:
             return self.input_values[item]
         else:
             raise ValueError('The item {0} is not a part of this device property.'.format(item))
 
-    def __set__(self, instance, value):
-        assert_value(value)
-        assert value.unit.dimensionality == self.prop_dimensionality.dimensionality,\
-            'Your dimensionality is incorrect for {0}. Yours is {1}, but it should be {2}'.format(self.prop_name,
-                                                                                                  value.unit.dimensionality,
-                                                                                                  self.prop_dimensionality.dimensionality)
-        self.prop_value = value
+    # def __get__(self, instance, owner):
+    #     return self.value
 
-    def set(self, prop_value, input_values=None):
+    # def __set__(self, instance, value):
+    #     assert_value(value)
+    #     assert value.unit.dimensionality == self.prop_dimensionality.dimensionality,\
+    #         'Your dimensionality is incorrect for {0}. Yours is {1}, but it should be {2}'.format(self.prop_name,
+    #                                                                                               value.unit.dimensionality,
+    #                                                                                               self.prop_dimensionality.dimensionality)
+    #     self.value = value
+
+    def set(self, value, input_values=None):
         """
         Set the property and input values for this Device Property.
         Args:
-            prop_value (physics.Value): The Value to be set for this property
+            value (physics.Value): The Value to be set for this property
             input_values (dict): A dictionary of the input values, using the convention {'input_name': input_value}
 
         Returns:
             None
         """
         # save the prop value
-        assert_value(prop_value)
-        assert prop_value.unit.dimensionality == self.prop_dimensionality.dimensionality, 'Your dimensionality is incorrect for {0}. Yours is {1}, but it should be' \
-                ' {2}'.format(self.prop_name, prop_value.unit.dimensionality, self.prop_dimensionality.dimensionality)
-        self.prop_value = prop_value
+        assert_value(value)
+        assert value.unit.dimensionality == self.prop_dimensionality.dimensionality, 'Your dimensionality is incorrect for {0}. Yours is {1}, but it should be' \
+                ' {2}'.format(self.prop_name, value.unit.dimensionality, self.prop_dimensionality.dimensionality)
+        self.value = value
 
         # save the input values, making sure that they match the given names
         for i, input_name in enumerate(self.input_value_names):
@@ -136,4 +139,4 @@ class DeviceProperty(object):
                 self.input_values[optional_name] = input_value
 
     def __str__(self):
-        return '{0} = {1}'.format(self.name, self.prop_value)
+        return '{0} = {1}'.format(self.name, self.value)
