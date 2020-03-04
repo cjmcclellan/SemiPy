@@ -12,7 +12,30 @@ from SemiPy.helper.plotting import create_scatter_plot
 import numpy as np
 import pandas as pd
 from dash_cjm.plots.Basic import BasicPlot
-import dash_dangerously_set_inner_html
+
+
+class Parent(object):
+    """
+    Parent class
+
+    Args:
+       parent_argument (int): Argument of the parent.
+    """
+    def __init__(self, parent_argument):
+      self.arg1 = parent_argument
+
+
+class Child(Parent):
+    """
+    Child class
+
+    Args:
+        child_argument (int): Argument of the child
+        parent_argument (int): Argument of the parent.
+    """
+    def __init__(self, child_argument, parent_argument):
+        super().__init__(*args)
+        self.arg2 = child_argument
 
 
 class TLMExtractor(Extractor):

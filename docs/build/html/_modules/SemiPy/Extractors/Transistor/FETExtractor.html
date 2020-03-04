@@ -1,0 +1,431 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SemiPy.Extractors.Transistor.FETExtractor &mdash; SemiPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> SemiPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../overview.html">1. Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples.html">2. Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_doc.html">4. API Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SemiPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>SemiPy.Extractors.Transistor.FETExtractor</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for SemiPy.Extractors.Transistor.FETExtractor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Extractor for extracting information of Field-Effect Transistors from IdVg and IdVd data sets.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">SemiPy.Extractors.Extractors</span> <span class="kn">import</span> <span class="n">Extractor</span>
+<span class="kn">from</span> <span class="nn">SemiPy.Datasets.IVDataset</span> <span class="kn">import</span> <span class="n">IdVgDataSet</span><span class="p">,</span> <span class="n">IdVdDataSet</span>
+<span class="kn">from</span> <span class="nn">SemiPy.Devices.FET.Transistor</span> <span class="kn">import</span> <span class="n">NFET</span><span class="p">,</span> <span class="n">PFET</span>
+<span class="kn">from</span> <span class="nn">physics.value</span> <span class="kn">import</span> <span class="n">Value</span><span class="p">,</span> <span class="n">ureg</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">SemiPy.helper.plotting</span> <span class="kn">import</span> <span class="n">create_scatter_plot</span>
+
+
+<div class="viewcode-block" id="FETExtractor"><a class="viewcode-back" href="../../../../SemiPy.Extractors.Transistor.html#SemiPy.Extractors.Transistor.FETExtractor.FETExtractor">[docs]</a><span class="k">class</span> <span class="nc">FETExtractor</span><span class="p">(</span><span class="n">Extractor</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An extractor object for Field-Effect Transistors (FETs).  To get FET properties, IdVd, or IdVg data, use the FET, idvd, and idvg</span>
+<span class="sd">    attributes.  Look at FET, IdVgDataSet, and IdVdDataSet classes for understanding how to use these attributes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        length (Value or float):  Physical length of the FET.  Should be a Value with correct units or float in micrometers.</span>
+<span class="sd">        width (Value or float): Physical width of the FET.  Should be a Value with correct units or float in micrometers.</span>
+<span class="sd">        tox (Value or float): Physical thickness of the FET oxide.  Should be a Value with correct units or float in nanometers.</span>
+<span class="sd">        epiox (Value or float): Dielectric constant of the oxide.  Should be a Value or float (unitless).</span>
+<span class="sd">        device_polarity (str): The polarity of the device, either &#39;n&#39; or &#39;p&#39; for electron or hole, respectively.</span>
+<span class="sd">        idvd_path (str): Path to the IdVd data.</span>
+<span class="sd">        idvg_path (str): Path to the IdVg data.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        FET: A SemiPy.Devices.FET.Transistor.Transistor instance.</span>
+<span class="sd">        idvd: A SemiPy.Datasets.IVDataset.IdVdDataSet instance of the Id Vd data</span>
+<span class="sd">        idvg: A SemiPy.Datasets.IVDataset.IdVgDataSet instance of the Id Vg data</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; from physics.value import Value, ureg</span>
+<span class="sd">        # idvg_path and idvd_path point to a xls, csv, or txt where IdVg and IdVd data files are.</span>
+<span class="sd">        &gt;&gt;&gt; width = Value(1.0, ureg.micrometer)</span>
+<span class="sd">        &gt;&gt;&gt; length = Value(1.0, ureg.micrometer)</span>
+<span class="sd">        &gt;&gt;&gt; tox = Value(30.0, ureg.nanometer)</span>
+<span class="sd">        &gt;&gt;&gt; fetdata = FETExtractor(width=width, length=length, tox=tox, epiox=3.9, device_polarity=&#39;n&#39;, idvg_path=idvg_path, idvd_path=idvd_path)</span>
+<span class="sd">        # access the extracted FET information.  See SemiPy.Devices.FET.Transistor.Transistor for full list of properties</span>
+<span class="sd">        &gt;&gt;&gt; print(fetdata.FET.max_gm)</span>
+<span class="sd">        maximum transconductance = 3e-6 ampere / micrometer / volt</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">tox</span><span class="p">,</span> <span class="n">epiox</span><span class="p">,</span> <span class="n">device_polarity</span><span class="p">,</span> <span class="n">vd_values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">idvd_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">idvg_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">FETExtractor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># import the idvg and idvd path if given</span>
+        <span class="k">if</span> <span class="n">idvd_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">idvg_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You have not given a path to IdVd or IdVg data, so there is nothing to extract&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">idvg_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span> <span class="o">=</span> <span class="n">IdVgDataSet</span><span class="p">(</span><span class="n">data_path</span><span class="o">=</span><span class="n">idvg_path</span><span class="p">,</span> <span class="n">secondary_independent_values</span><span class="o">=</span><span class="n">vd_values</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">idvd_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idvd</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idvd</span> <span class="o">=</span> <span class="n">IdVdDataSet</span><span class="p">(</span><span class="n">data_path</span><span class="o">=</span><span class="n">idvd_path</span><span class="p">)</span>
+
+        <span class="c1"># now check the given properties</span>
+        <span class="n">length</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">tox</span><span class="p">,</span> <span class="n">epiox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__check_properties</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">tox</span><span class="p">,</span> <span class="n">epiox</span><span class="p">)</span>
+
+        <span class="c1"># print(&#39;creating FET&#39;)</span>
+        <span class="c1"># now create the FET model</span>
+        <span class="k">if</span> <span class="n">device_polarity</span> <span class="ow">is</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">FET</span> <span class="o">=</span> <span class="n">PFET</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">length</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">tox</span><span class="o">=</span><span class="n">tox</span><span class="p">,</span> <span class="n">dielectric_const</span><span class="o">=</span><span class="n">epiox</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">device_polarity</span> <span class="ow">is</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">FET</span> <span class="o">=</span> <span class="n">NFET</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">length</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">tox</span><span class="o">=</span><span class="n">tox</span><span class="p">,</span> <span class="n">dielectric_const</span><span class="o">=</span><span class="n">epiox</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The device polarity must be either n or p, not </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">device_polarity</span><span class="p">))</span>
+
+        <span class="c1"># add some simple checks on the data.  Make sure Ig is not too high, Is and Id are reasonably matched, etc.</span>
+
+        <span class="c1"># now normalize all the data in idvg and idvd</span>
+        <span class="n">adjust_current</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">norm_Id</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># adjust_volt = lambda x: Value.array_like(x, unit=ureg.volt)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;adjusting Id&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">adjust_column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">adjust_current</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idvd</span><span class="o">.</span><span class="n">adjust_column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">adjust_current</span><span class="p">)</span>
+
+        <span class="c1"># now run the extractions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__extract_data</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__extract_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract the properties of the FET given the available data, including transconductance (gm), subthreshold swing (ss), field-effect</span>
+<span class="sd">        mobility (mufe), threshold voltage (vt), max on current (max_Ion), min off current at max Ion Vd (min_Ioff),</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;starting extraction&#39;</span><span class="p">)</span>
+        <span class="c1"># now compute the vt and gm using the max Vd</span>
+        <span class="n">vd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_secondary_indep_values</span><span class="p">()</span>
+        <span class="c1"># adjust the shape to be [num_set, 1]</span>
+        <span class="n">vd</span> <span class="o">=</span> <span class="n">Value</span><span class="o">.</span><span class="n">array_like</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vd</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">ureg</span><span class="o">.</span><span class="n">volt</span><span class="p">)</span>
+        <span class="n">max_vd</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">vd</span><span class="p">)</span>
+
+        <span class="n">vg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="s1">&#39;vg&#39;</span><span class="p">)</span>
+        <span class="n">max_vg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">max_value</span><span class="p">(</span><span class="n">vg</span><span class="p">)</span>
+
+        <span class="c1"># get the max and min Ion</span>
+        <span class="n">ion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+        <span class="n">max_ion</span><span class="p">,</span> <span class="n">max_ion_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">max_value</span><span class="p">(</span><span class="n">ion</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">max_ion_vd</span> <span class="o">=</span> <span class="n">vd</span><span class="p">[</span><span class="n">max_ion_i</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">max_ion_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="p">[</span><span class="n">max_ion_i</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">max_Ion</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">max_ion</span><span class="p">,</span> <span class="n">input_values</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Vg&#39;</span><span class="p">:</span> <span class="n">max_ion_vg</span><span class="p">,</span> <span class="s1">&#39;Vd&#39;</span><span class="p">:</span> <span class="n">max_ion_vd</span><span class="p">})</span>
+
+        <span class="c1"># compute the gm</span>
+        <span class="n">gm_fwd</span><span class="p">,</span> <span class="n">max_gm_fwd</span><span class="p">,</span> <span class="n">max_gm_fwd_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_gm</span><span class="p">(</span><span class="n">fwd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_max</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">gm_bwd</span><span class="p">,</span> <span class="n">max_gm_bwd</span><span class="p">,</span> <span class="n">max_gm_bwd_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_gm</span><span class="p">(</span><span class="n">bwd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_max</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">gm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">gm_fwd</span><span class="p">,</span> <span class="n">gm_bwd</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;gm&#39;</span><span class="p">,</span> <span class="n">column_data</span><span class="o">=</span><span class="n">gm</span><span class="p">)</span>
+
+        <span class="n">max_gm</span><span class="p">,</span> <span class="n">max_gm_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">max_slope_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;gm&#39;</span><span class="p">),</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">max_gm_vd</span> <span class="o">=</span> <span class="n">vd</span><span class="p">[</span><span class="n">max_gm_i</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">max_gm_input_values</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Vg&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column_set</span><span class="p">(</span><span class="s1">&#39;vg&#39;</span><span class="p">,</span> <span class="n">max_gm_vd</span><span class="p">)[</span><span class="n">max_gm_i</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="s1">&#39;Vd&#39;</span><span class="p">:</span> <span class="n">max_gm_vd</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">max_gm</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">max_gm</span><span class="p">,</span> <span class="n">max_gm_input_values</span><span class="p">)</span>
+        <span class="c1"># print(&#39;set gm&#39;)</span>
+        <span class="c1"># Now extract the Vt values</span>
+        <span class="n">vt_fwd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_vt</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">max_gm_fwd_i</span><span class="p">,</span> <span class="n">max_gm</span><span class="o">=</span><span class="n">max_gm_fwd</span><span class="p">,</span> <span class="n">fwd</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">vt_bwd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_vt</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">max_gm_bwd_i</span><span class="p">,</span> <span class="n">max_gm</span><span class="o">=</span><span class="n">max_gm_bwd</span><span class="p">,</span> <span class="n">bwd</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">Vt_fwd</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">vt_fwd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">Vt_bwd</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">vt_bwd</span><span class="p">)</span>
+
+        <span class="c1"># compute the ss</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slope</span><span class="p">(</span><span class="n">y_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="s1">&#39;vg&#39;</span><span class="p">),</span>
+                         <span class="n">x_data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)),</span>
+                         <span class="n">keep_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;ss&#39;</span><span class="p">,</span> <span class="n">column_data</span><span class="o">=</span><span class="n">ss</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">min_ss</span> <span class="o">=</span> <span class="n">ss</span>
+
+        <span class="c1"># print(&#39;computing properties&#39;)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">compute_properties</span><span class="p">()</span>
+
+        <span class="c1"># print(&#39;adjusting n&#39;)</span>
+
+        <span class="c1"># now compute the carrier density</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">vg_to_n</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="s1">&#39;vg&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+        <span class="c1"># print(&#39;adding r&#39;)</span>
+        <span class="c1"># now compute the resistance</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">vd</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span><span class="s1">&#39;resistance&#39;</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+
+    <span class="c1"># def extract_double_sweep(self, ):</span>
+
+    <span class="k">def</span> <span class="nf">_extract_gm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwd</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bwd</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">vd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_max</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">current</span><span class="p">,</span> <span class="n">gate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_directions</span><span class="p">([</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;vg&#39;</span><span class="p">],</span> <span class="n">fwd</span><span class="o">=</span><span class="n">fwd</span><span class="p">,</span> <span class="n">bwd</span><span class="o">=</span><span class="n">bwd</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">vd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slope</span><span class="p">(</span><span class="n">x_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="n">gate</span><span class="p">),</span>
+                             <span class="n">y_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="n">current</span><span class="p">),</span> <span class="n">keep_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slope</span><span class="p">(</span><span class="n">x_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column_set</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">vd</span><span class="p">),</span>
+                             <span class="n">y_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column_set</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">vd</span><span class="p">),</span> <span class="n">keep_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># if return max, then return the max and max_i</span>
+        <span class="k">if</span> <span class="n">return_max</span><span class="p">:</span>
+            <span class="n">max_gm</span><span class="p">,</span> <span class="n">max_gm_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">max_slope_value</span><span class="p">(</span><span class="n">gm</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># now check if the max gm was reached before the final Vg point.  If so, then there could be error</span>
+            <span class="n">vg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="s1">&#39;vg&#39;</span><span class="p">)</span>
+            <span class="n">max_vg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FET</span><span class="o">.</span><span class="n">max_slope_value</span><span class="p">(</span><span class="n">vg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">max_vg</span> <span class="o">==</span> <span class="n">vg</span><span class="p">[</span><span class="n">max_gm_i</span><span class="p">]:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The transconductance (gm) has not reached maximum, potentially resulting in error&#39;</span>
+                              <span class="s1">&#39; in extracting threshold voltage&#39;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">gm</span><span class="p">,</span> <span class="n">max_gm</span><span class="p">,</span> <span class="n">max_gm_i</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">gm</span>
+
+    <span class="k">def</span> <span class="nf">_extract_vt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">max_gm</span><span class="p">,</span> <span class="n">fwd</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bwd</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">vd</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">current</span><span class="p">,</span> <span class="n">gate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_directions</span><span class="p">([</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;vg&#39;</span><span class="p">],</span> <span class="n">fwd</span><span class="o">=</span><span class="n">fwd</span><span class="p">,</span> <span class="n">bwd</span><span class="o">=</span><span class="n">bwd</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">vd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="n">current</span><span class="p">)[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">gate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column</span><span class="p">(</span><span class="n">gate</span><span class="p">)[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column_set</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">secondary_value</span><span class="o">=</span><span class="n">vd</span><span class="p">)[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">gate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idvg</span><span class="o">.</span><span class="n">get_column_set</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">secondary_value</span><span class="o">=</span><span class="n">vd</span><span class="p">)[</span><span class="n">index</span><span class="p">]</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">vt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_linear_extraction</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">current</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">gate</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="n">max_gm</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vt</span>
+
+    <span class="k">def</span> <span class="nf">_sweep_directions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">fwd</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bwd</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adjust the keys of columns to index fwd or bwd.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            keys (list): The list of strs of the columns to be accessed</span>
+<span class="sd">            fwd (bool): Flag for if fwd should be accessed</span>
+<span class="sd">            bwd (bool): Flag for if bwd should be accessed</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple of keys adjusted (or not if both fwd and bwd are false)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fwd</span><span class="p">:</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="s1">&#39;_fwd&#39;</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">bwd</span><span class="p">:</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="s1">&#39;_bwd&#39;</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">__check_properties</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">tox</span><span class="p">,</span> <span class="n">epiox</span><span class="p">):</span>
+        <span class="c1"># make sure given properties are values</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Given length is not a value. Assuming units are micrometers.&#39;</span><span class="p">)</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">length</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ureg</span><span class="o">.</span><span class="n">micrometer</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">length</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">dimensionality</span> <span class="o">==</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span><span class="o">.</span><span class="n">dimensionality</span><span class="p">,</span> <span class="s1">&#39;Your length is not given in meters, but </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">length</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">dimensionality</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Given width is not a value. Assuming units are micrometers.&#39;</span><span class="p">)</span>
+            <span class="n">width</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ureg</span><span class="o">.</span><span class="n">micrometer</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">width</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">dimensionality</span> <span class="o">==</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span><span class="o">.</span><span class="n">dimensionality</span><span class="p">,</span> <span class="s1">&#39;Your length is not given in meters, but </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">width</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">dimensionality</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tox</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Given Tox is not a value. Assuming units are nanometers.&#39;</span><span class="p">)</span>
+            <span class="n">tox</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">tox</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ureg</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">tox</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">dimensionality</span> <span class="o">==</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span><span class="o">.</span><span class="n">dimensionality</span><span class="p">,</span> <span class="s1">&#39;Your length is not given in meters, but </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tox</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">dimensionality</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">epiox</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="n">epiox</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">epiox</span><span class="p">)</span>
+
+        <span class="c1"># now return all the properties</span>
+        <span class="k">return</span> <span class="n">length</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">tox</span><span class="p">,</span> <span class="n">epiox</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Connor McClellan
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

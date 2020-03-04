@@ -149,8 +149,10 @@ class BaseDataSet(object):
             master_independent_value_range (list): Range of min and max values of the master independent to be indexed.  For each master
              independent column, values between the value closest to min and max will be indexed.  If min is 2.1 and the master independent
              is 1.0, 2.0, 3.0, the values greater than 2.0 will be indexed
+
         Returns:
             np.ndarray column data
+
         """
         column_name = column_name.lower()
 
