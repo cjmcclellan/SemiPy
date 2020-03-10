@@ -19,6 +19,10 @@ class TestFETExtractors(unittest.TestCase):
         result = FETExtractor(width=1, length=1, tox=30, epiox=3.9,
                               device_polarity='n', idvg_path=idvg_path, idvd_path=idvd_path)
 
+        result.FET.publish_csv('.')
+
+
+        result.save_plots()
         print(result.FET.max_gm)
         print(result.FET.min_ss)
         a = 5

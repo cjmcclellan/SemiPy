@@ -14,30 +14,6 @@ import pandas as pd
 from dash_cjm.plots.Basic import BasicPlot
 
 
-class Parent(object):
-    """
-    Parent class
-
-    Args:
-       parent_argument (int): Argument of the parent.
-    """
-    def __init__(self, parent_argument):
-      self.arg1 = parent_argument
-
-
-class Child(Parent):
-    """
-    Child class
-
-    Args:
-        child_argument (int): Argument of the child
-        parent_argument (int): Argument of the parent.
-    """
-    def __init__(self, child_argument, parent_argument):
-        super().__init__(*args)
-        self.arg2 = child_argument
-
-
 class TLMExtractor(Extractor):
     """
     An extractor object for Transfer Length Method (TLM) measurements.
@@ -158,14 +134,14 @@ class TLMExtractor(Extractor):
             rc_plot = BasicPlot(x_label='carrier density {0}'.format(n_units), y_label='contact resistance {0}'.format(r_units),
                                 marker_size=8.0)
 
-            rc_plot.add_data(x_data=n[0], y_data=rc, error_y={'type': 'data', 'array': np.array(rc_error, dtype=float), 'visible': True},
+            rc_plot.add_data(x_data=n[0] * 1e-12, y_data=rc, error_y={'type': 'data', 'array': np.array(rc_error, dtype=float), 'visible': True},
                              mode='markers', name='n', text='n')
 
             rc_plot.save_plot(name='rc_at_vd_{0}'.format(vd))
 
             rsheet_plot = BasicPlot(x_label='carrier density {0}'.format(n_units), y_label='sheet resistance', marker_size=8.0)
 
-            rsheet_plot.add_data(x_data=n[0], y_data=r_sheet, error_y={'type': 'data', 'array': np.array(r_sheet_error, dtype=float),
+            rsheet_plot.add_data(x_data=n[0] * 1e-12, y_data=r_sheet, error_y={'type': 'data', 'array': np.array(r_sheet_error, dtype=float),
                                                                        'visible': True}, mode='markers', name='n', text='n')
 
             rsheet_plot.save_plot(name='rsheet_at_vd_{0}'.format(vd))

@@ -157,7 +157,8 @@
 <div class="viewcode-block" id="Voltage"><a class="viewcode-back" href="../../../../SemiPy.Devices.FET.html#SemiPy.Devices.FET.TransistorProperties.Voltage">[docs]</a><span class="k">class</span> <span class="nc">Voltage</span><span class="p">(</span><span class="n">DeviceProperty</span><span class="p">):</span>
 
     <span class="n">prop_name</span> <span class="o">=</span> <span class="s1">&#39;Voltage&#39;</span>
-    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">volt</span></div>
+    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">volt</span>
+    <span class="n">prop_standard_units</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">volt</span></div>
 
 
 <div class="viewcode-block" id="FETProperty"><a class="viewcode-back" href="../../../../SemiPy.Devices.FET.html#SemiPy.Devices.FET.TransistorProperties.FETProperty">[docs]</a><span class="k">class</span> <span class="nc">FETProperty</span><span class="p">(</span><span class="n">DeviceProperty</span><span class="p">):</span>
@@ -172,25 +173,29 @@
 <div class="viewcode-block" id="CurrentDensity"><a class="viewcode-back" href="../../../../SemiPy.Devices.FET.html#SemiPy.Devices.FET.TransistorProperties.CurrentDensity">[docs]</a><span class="k">class</span> <span class="nc">CurrentDensity</span><span class="p">(</span><span class="n">FETProperty</span><span class="p">):</span>
 
     <span class="n">prop_name</span> <span class="o">=</span> <span class="s1">&#39;Current&#39;</span>
-    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">amp</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span></div>
+    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">amp</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span>
+    <span class="n">prop_standard_units</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">microamp</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">micrometer</span></div>
 
 
 <div class="viewcode-block" id="Mobility"><a class="viewcode-back" href="../../../../SemiPy.Devices.FET.html#SemiPy.Devices.FET.TransistorProperties.Mobility">[docs]</a><span class="k">class</span> <span class="nc">Mobility</span><span class="p">(</span><span class="n">FETProperty</span><span class="p">):</span>
 
     <span class="n">prop_name</span> <span class="o">=</span> <span class="s1">&#39;Mobility&#39;</span>
-    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span> <span class="o">/</span> <span class="p">(</span><span class="n">ureg</span><span class="o">.</span><span class="n">volt</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">second</span><span class="p">)</span></div>
+    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span> <span class="o">/</span> <span class="p">(</span><span class="n">ureg</span><span class="o">.</span><span class="n">volt</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">second</span><span class="p">)</span>
+    <span class="n">prop_standard_units</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">centimeter</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">volt</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">second</span></div>
 
 
 <div class="viewcode-block" id="SubthresholdSwing"><a class="viewcode-back" href="../../../../SemiPy.Devices.FET.html#SemiPy.Devices.FET.TransistorProperties.SubthresholdSwing">[docs]</a><span class="k">class</span> <span class="nc">SubthresholdSwing</span><span class="p">(</span><span class="n">FETProperty</span><span class="p">):</span>
 
     <span class="n">prop_name</span> <span class="o">=</span> <span class="s1">&#39;Subthreshold Swing&#39;</span>
-    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">amp</span> <span class="o">/</span> <span class="p">(</span><span class="n">ureg</span><span class="o">.</span><span class="n">volt</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span><span class="p">)</span></div>
+    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">volt</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">amp</span>
+    <span class="n">prop_standard_units</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">millivolt</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">amp</span></div>
 
 
 <div class="viewcode-block" id="Transconductance"><a class="viewcode-back" href="../../../../SemiPy.Devices.FET.html#SemiPy.Devices.FET.TransistorProperties.Transconductance">[docs]</a><span class="k">class</span> <span class="nc">Transconductance</span><span class="p">(</span><span class="n">FETProperty</span><span class="p">):</span>
 
     <span class="n">prop_name</span> <span class="o">=</span> <span class="s1">&#39;Transconductance&#39;</span>
-    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">ureg</span><span class="o">.</span><span class="n">ohm</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span><span class="p">)</span></div>
+    <span class="n">prop_dimensionality</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">ureg</span><span class="o">.</span><span class="n">ohm</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">meter</span><span class="p">)</span>
+    <span class="n">prop_standard_units</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">microsiemens</span> <span class="o">/</span> <span class="n">ureg</span><span class="o">.</span><span class="n">micrometer</span></div>
 
 
 </pre></div>

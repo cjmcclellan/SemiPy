@@ -26,6 +26,11 @@ class BaseDevice(object):
     def _add_publish_property(self, name):
         self.publish_prop.append(name)
 
+    # def round_value(self, value):
+    #     assert isinstance(value, Value)
+    #     value = value.reduced_units()
+    #     a = 5
+
     def publish_csv(self, path):
         """
 
@@ -38,11 +43,15 @@ class BaseDevice(object):
         assert isinstance(path, str), 'path must be a string.'
         path = os.path.join(path, self.name + '.csv')
         with open(path, 'w') as f:
+            # first write the column names
+            f.write("Property,Value,Unit\n")
             for key in self.publish_prop:
                 prop = self.__dict__[key]
                 # prop = self.publish_prop[key]
                 if isinstance(prop, Value):
                     f.write("%s,%s,%s\n" % (key, prop.value, prop.unit))
+                elif isinstance(prop, DeviceProperty):
+                    f.write("%s,%s,%s\n" % (key, prop.value.value, prop.value.unit))
                 else:
                     f.write("%s,%s\n" % (key, prop))
 
@@ -51,6 +60,8 @@ class DeviceProperty(object):
 
     prop_name = None
     prop_dimensionality = None
+    # the value will be adjusted to the standard units and rounded to two decimal places
+    prop_standard_units = None
 
     input_value_names = []
     input_dimensionalities = []
@@ -115,6 +126,12 @@ class DeviceProperty(object):
         assert value.unit.dimensionality == self.prop_dimensionality.dimensionality, 'Your dimensionality is incorrect for {0}. Yours is {1}, but it should be' \
                 ' {2}'.format(self.prop_name, value.unit.dimensionality, self.prop_dimensionality.dimensionality)
         self.value = value
+
+        # now if the standard units were given, then adjust the value units
+        if self.prop_standard_units is not None:
+            self.value = self.value.adjust_unit(self.prop_standard_units)
+            # now round the value to 2 decimal places
+            self.value = Value(value=round(self.value.value * 100) / 100, unit=self.value.unit)
 
         # save the input values, making sure that they match the given names
         for i, input_name in enumerate(self.input_value_names):

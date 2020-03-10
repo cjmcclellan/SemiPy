@@ -10,6 +10,7 @@ class Voltage(DeviceProperty):
 
     prop_name = 'Voltage'
     prop_dimensionality = ureg.volt
+    prop_standard_units = ureg.volt
 
 
 class FETProperty(DeviceProperty):
@@ -25,23 +26,27 @@ class CurrentDensity(FETProperty):
 
     prop_name = 'Current'
     prop_dimensionality = ureg.amp / ureg.meter
+    prop_standard_units = ureg.microamp / ureg.micrometer
 
 
 class Mobility(FETProperty):
 
     prop_name = 'Mobility'
     prop_dimensionality = ureg.meter * ureg.meter / (ureg.volt * ureg.second)
+    prop_standard_units = ureg.centimeter ** 2 / ureg.volt / ureg.second
 
 
 class SubthresholdSwing(FETProperty):
 
     prop_name = 'Subthreshold Swing'
-    prop_dimensionality = ureg.amp / (ureg.volt * ureg.meter)
+    prop_dimensionality = ureg.meter * ureg.volt / ureg.amp
+    prop_standard_units = ureg.meter * ureg.millivolt / ureg.amp
 
 
 class Transconductance(FETProperty):
 
     prop_name = 'Transconductance'
     prop_dimensionality = 1 / (ureg.ohm * ureg.meter)
+    prop_standard_units = ureg.microsiemens / ureg.micrometer
 
 

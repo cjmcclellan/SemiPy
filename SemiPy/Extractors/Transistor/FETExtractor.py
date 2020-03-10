@@ -8,7 +8,7 @@ from SemiPy.Devices.FET.Transistor import NFET, PFET
 from physics.value import Value, ureg
 import warnings
 import numpy as np
-from SemiPy.helper.plotting import create_scatter_plot
+from dash_cjm.plots.Basic import BasicPlot
 
 
 class FETExtractor(Extractor):
@@ -156,6 +156,34 @@ class FETExtractor(Extractor):
         self.idvg.add_column('resistance', r)
 
     # def extract_double_sweep(self, ):
+
+    def save_plots(self):
+
+        I_units = '\u03BCA/\u03BCm'
+        if self.idvg is not None:
+            vg = self.idvg.get_column('vg')[0]
+            # first save the IdVg and IdVd plots
+            rc_plot = BasicPlot(x_label='Vg (V)', y_label='Id ({0})'.format(I_units),
+                                marker_size=8.0)
+
+            for vd, id in self.idvg.get_set_indexed_columns('id').items():
+                rc_plot.add_data(x_data=vg, y_data=id * 1e6, mode='markers', name='Vd = {0}'.format(vd), text='n')
+
+            rc_plot.save_plot(name='IdVg_plot')
+
+        if self.idvd is not None:
+            vd = self.idvd.get_column('vd')[0]
+            # first save the IdVg and IdVd plots
+            rc_plot = BasicPlot(x_label='Vd (V)', y_label='Id ({0})'.format(I_units),
+                                marker_size=8.0)
+
+            for vg, id in self.idvd.get_set_indexed_columns('id').items():
+                rc_plot.add_data(x_data=vd, y_data=id * 1e6, mode='markers', name='Vg = {0}'.format(vg), text='n')
+
+            rc_plot.save_plot(name='IdVd_plot')
+
+        # now save a CSV file of the FET properties
+        self.FET.publish_csv('.')
 
     def _extract_gm(self, fwd=False, bwd=False, vd=None, return_max=False):
         current, gate = self._sweep_directions(['id', 'vg'], fwd=fwd, bwd=bwd)

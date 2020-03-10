@@ -27,7 +27,7 @@ class TestTLMExtractors(unittest.TestCase):
                               device_polarity='n', idvg_path=idvg_path,
                               vd_values=[1.0, 2.0])
 
-
+        result.save_tlm_plots()
 
         a = 5
 

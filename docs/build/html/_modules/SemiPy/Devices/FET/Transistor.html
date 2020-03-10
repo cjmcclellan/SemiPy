@@ -205,14 +205,20 @@
 
         <span class="c1"># placeholders</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_mobility</span> <span class="o">=</span> <span class="n">Mobility</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;maximum field-effect mobility&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_publish_property</span><span class="p">(</span><span class="s1">&#39;max_mobility&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_gm</span> <span class="o">=</span> <span class="n">Transconductance</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;maximum transconductance&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_publish_property</span><span class="p">(</span><span class="s1">&#39;max_gm&#39;</span><span class="p">)</span>
         <span class="c1"># self._max_gm_Vd = None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_min_ss</span> <span class="o">=</span> <span class="n">SubthresholdSwing</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;minimum subthreshold swing&#39;</span><span class="p">)</span>
+        <span class="c1"># self._add_publish_property(&#39;_min_ss&#39;)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Vt_bwd</span> <span class="o">=</span> <span class="n">Voltage</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Backward Sweep Threshold Voltage&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Vt_fwd</span> <span class="o">=</span> <span class="n">Voltage</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Forward Sweep Threshold Voltage&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Vt_avg</span> <span class="o">=</span> <span class="n">Voltage</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Average Threshold Voltage&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_publish_property</span><span class="p">(</span><span class="s1">&#39;Vt_avg&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hysteresis</span> <span class="o">=</span> <span class="n">Voltage</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Hysteresis&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_publish_property</span><span class="p">(</span><span class="s1">&#39;hysteresis&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_Ion</span> <span class="o">=</span> <span class="n">CurrentDensity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Maximum Current Density&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_publish_property</span><span class="p">(</span><span class="s1">&#39;max_Ion&#39;</span><span class="p">)</span>
         <span class="c1"># TODO: Vt will depend on Vd.  How should I save that info and adjust for n</span>
 
         <span class="c1"># add some interface properties</span>

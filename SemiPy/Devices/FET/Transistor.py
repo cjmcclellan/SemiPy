@@ -57,14 +57,20 @@ class FET(Transistor):
 
         # placeholders
         self.max_mobility = Mobility(name='maximum field-effect mobility')
+        self._add_publish_property('max_mobility')
         self.max_gm = Transconductance(name='maximum transconductance')
+        self._add_publish_property('max_gm')
         # self._max_gm_Vd = None
         self._min_ss = SubthresholdSwing(name='minimum subthreshold swing')
+        # self._add_publish_property('_min_ss')
         self.Vt_bwd = Voltage(name='Backward Sweep Threshold Voltage')
         self.Vt_fwd = Voltage(name='Forward Sweep Threshold Voltage')
         self.Vt_avg = Voltage(name='Average Threshold Voltage')
+        self._add_publish_property('Vt_avg')
         self.hysteresis = Voltage(name='Hysteresis')
+        self._add_publish_property('hysteresis')
         self.max_Ion = CurrentDensity(name='Maximum Current Density')
+        self._add_publish_property('max_Ion')
         # TODO: Vt will depend on Vd.  How should I save that info and adjust for n
 
         # add some interface properties

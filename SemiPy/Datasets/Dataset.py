@@ -370,6 +370,22 @@ class SetDataSet(BaseDataSet):
         # now return any overlapping names in the two lists
         return list(set(column_names).intersection(secondary_column_names))
 
+    def get_set_indexed_columns(self, column_name):
+        """
+        Get a dictionary of columns with keys being the set values
+
+        Args:
+            column_name (str): The name of the desired column
+
+        Returns:
+            dict of columns with set values as keys
+        """
+        result = {}
+        for set_value in self.secondary_indep_values.keys():
+            result[set_value] = self.get_column_set(column_name, set_value)
+
+        return result
+
     def get_column_set(self, column_name, secondary_value):
         """
         Similar to get_column but allows index by the secondary_value to return a single column
