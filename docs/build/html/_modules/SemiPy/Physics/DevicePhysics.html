@@ -153,6 +153,7 @@
 <span class="kn">from</span> <span class="nn">physics.fundamental_constants</span> <span class="kn">import</span> <span class="n">free_space_permittivity_F_div_cm</span><span class="p">,</span> <span class="n">electron_charge_C</span>
 <span class="c1"># from physics.helper import assert_value</span>
 <span class="kn">from</span> <span class="nn">physics.units</span> <span class="kn">import</span> <span class="n">ureg</span>
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="c1"># from physics.value import Value</span>
 
 
@@ -170,6 +171,21 @@
 
 <div class="viewcode-block" id="carrier_density"><a class="viewcode-back" href="../../../SemiPy.Physics.html#SemiPy.Physics.DevicePhysics.carrier_density">[docs]</a><span class="k">def</span> <span class="nf">carrier_density</span><span class="p">(</span><span class="n">cox</span><span class="p">,</span> <span class="n">vg</span><span class="p">,</span> <span class="n">vt</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">cox</span> <span class="o">*</span> <span class="p">(</span><span class="n">vg</span> <span class="o">-</span> <span class="n">vt</span><span class="p">)</span> <span class="o">/</span> <span class="n">electron_charge_C</span></div>
+
+
+<div class="viewcode-block" id="characteristic_length"><a class="viewcode-back" href="../../../SemiPy.Physics.html#SemiPy.Physics.DevicePhysics.characteristic_length">[docs]</a><span class="k">def</span> <span class="nf">characteristic_length</span><span class="p">(</span><span class="n">epichannel</span><span class="p">,</span> <span class="n">epiox</span><span class="p">,</span> <span class="n">tchannel</span><span class="p">,</span> <span class="n">tox</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the characteristic length of a FET (lambda = sqrt(epi_channel * t_channel * tox / epi_ox))</span>
+<span class="sd">    Args:</span>
+<span class="sd">        epichannel:</span>
+<span class="sd">        epiox:</span>
+<span class="sd">        tchannel:</span>
+<span class="sd">        tox:</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        lambda</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">epichannel</span> <span class="o">*</span> <span class="n">tchannel</span> <span class="o">*</span> <span class="n">tox</span> <span class="o">/</span> <span class="n">epiox</span><span class="p">)</span></div>
 </pre></div>
 
            </div>

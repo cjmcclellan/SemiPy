@@ -165,35 +165,9 @@ to install on either Windows or Linux (Mac OSX install will be very similar to L
 </div>
 <div class="section" id="on-windows">
 <h2><span class="section-number">3.2. </span>On Windows<a class="headerlink" href="#on-windows" title="Permalink to this headline">¶</a></h2>
-<p>Firstly, you have to install Ngspice for Windows from this <a class="reference external" href="http://ngspice.sourceforge.net/download.html">page</a>.  Download the archive
-<code class="file docutils literal notranslate"><span class="pre">ngspice-30_dll_64.zip</span></code> from thex <a class="reference external" href="https://sourceforge.net/projects/ngspice/files/ng-spice-rework/28">release page</a> and unzip the files in
-<cite>C:\Program Files\Spice64_dll</cite>.</p>
-<p>Secondly, you have to install the <a class="reference external" href="https://www.anaconda.com/download/">Anaconda Distribution</a> or
-<a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a> so as to get a full featured Python 3
-environment.</p>
-<p>Then open the <a class="reference external" href="https://docs.continuum.io/anaconda/navigator/">Anaconda Navigator</a> and launch a console for your root environment.</p>
-<p>You can now run <em>pip</em> to install PySpice in your root environment using this command:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pip install PySpice
-</pre></div>
-</div>
 </div>
 <div class="section" id="on-linux">
 <h2><span class="section-number">3.3. </span>On Linux<a class="headerlink" href="#on-linux" title="Permalink to this headline">¶</a></h2>
-<p>Firstly, you have to install Python 3 from your distribution.</p>
-<p>The Ngspice shared library is actually not available on several distributions including Fedora and
-Ubuntu. <strong>I encourage you to report this issue on your distribution.</strong></p>
-<p>On Fedora, I recommend to don’t install the Fedora’s <em>ngspice</em> package since it is <strong>badly compiled
-and maintained</strong>.  To install the Ngspice shared library, you can use my <a class="reference external" href="https://copr.fedorainfracloud.org/coprs/fabricesalvaire/ngspice">Ngspice Copr repository</a>:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>dnf copr <span class="nb">enable</span> fabricesalvaire/ngspice
-dnf install libngspice
-</pre></div>
-</div>
-<p>The RPM sources are available on <a class="reference external" href="https://pagure.io/copr-ngspice">Pagure.io</a></p>
-<p>If you are not able to install the Ngspice shared library easily on your system, but you can install
-the Ngspice program, then you can use the “subprocess” mode in replacement of the “shared” mode.  In
-this case, you have to set globally the default simulator using the attribute
-<code class="xref py py-attr docutils literal notranslate"><span class="pre">PySpice.Spice.Simulation.CircuitSimulator.DEFAULT_SIMULATOR</span></code> to <cite>ngspice-subprocess</cite>.</p>
-<p>Then you can install PySpice using <em>pip</em> or from source. See supra.</p>
 </div>
 </div>
 

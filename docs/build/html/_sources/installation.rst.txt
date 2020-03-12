@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. _installation-page:
+.. _installation_page:
 
 ==============
  Installation
@@ -22,46 +22,6 @@ On Windows
 ----------
 
 
-Firstly, you have to install Ngspice for Windows from this `page
-<http://ngspice.sourceforge.net/download.html>`_.  Download the archive
-:file:`ngspice-30_dll_64.zip` from thex `release page
-<https://sourceforge.net/projects/ngspice/files/ng-spice-rework/28>`_ and unzip the files in
-`C:\\Program Files\\Spice64_dll`.
-
-Secondly, you have to install the `Anaconda Distribution <https://www.anaconda.com/download/>`_ or
-`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_ so as to get a full featured Python 3
-environment.
-
-Then open the `Anaconda Navigator <https://docs.continuum.io/anaconda/navigator/>`_ and launch a console for your root environment.
-
-You can now run *pip* to install PySpice in your root environment using this command:
-
-.. code-block:: sh
-
-  pip install PySpice
-
 On Linux
 --------
 
-Firstly, you have to install Python 3 from your distribution.
-
-The Ngspice shared library is actually not available on several distributions including Fedora and
-Ubuntu. **I encourage you to report this issue on your distribution.**
-
-On Fedora, I recommend to don't install the Fedora's *ngspice* package since it is **badly compiled
-and maintained**.  To install the Ngspice shared library, you can use my `Ngspice Copr repository
-<https://copr.fedorainfracloud.org/coprs/fabricesalvaire/ngspice>`_:
-
-.. code-block:: sh
-
-  dnf copr enable fabricesalvaire/ngspice
-  dnf install libngspice
-
-The RPM sources are available on `Pagure.io <https://pagure.io/copr-ngspice>`_
-
-If you are not able to install the Ngspice shared library easily on your system, but you can install
-the Ngspice program, then you can use the "subprocess" mode in replacement of the "shared" mode.  In
-this case, you have to set globally the default simulator using the attribute
-:attr:`PySpice.Spice.Simulation.CircuitSimulator.DEFAULT_SIMULATOR` to `ngspice-subprocess`.
-
-Then you can install PySpice using *pip* or from source. See supra.
