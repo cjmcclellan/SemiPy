@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>4.2.2.2. Interfaces Properties &mdash; SemiPy 0.0.1 documentation</title>
+  <title>4.3.2.2. Interfaces Properties &mdash; SemiPy 0.0.1 documentation</title>
   
 
   
@@ -35,8 +35,8 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="4.3. Extractors" href="SemiPy.Extractors.html" />
-    <link rel="prev" title="4.2.2.1. Bulk Properties" href="SemiPy.Devices.Bulk.html" /> 
+    <link rel="next" title="4.4. SemiPy.Physics package" href="SemiPy.Physics.html" />
+    <link rel="prev" title="4.3.2.1. Bulk Properties" href="SemiPy.Devices.Bulk.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -86,16 +86,17 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api_doc.html">4. API Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="SemiPy.Datasets.html">4.1. Datasets</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="SemiPy.Devices.html">4.2. Devices</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="SemiPy.Devices.html#semiconductor-devices">4.2.1. Semiconductor Devices</a></li>
-<li class="toctree-l3 current"><a class="reference internal" href="SemiPy.Devices.html#semiconductor-device-properties">4.2.2. Semiconductor Device Properties</a><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="SemiPy.Devices.Bulk.html">4.2.2.1. Bulk Properties</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">4.2.2.2. Interfaces Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SemiPy.Extractors.html">4.2. Extractors</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="SemiPy.Devices.html">4.3. Devices</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="SemiPy.Devices.html#semiconductor-devices">4.3.1. Semiconductor Devices</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="SemiPy.Devices.html#semiconductor-material-properties">4.3.2. Semiconductor Material Properties</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="SemiPy.Devices.Bulk.html">4.3.2.1. Bulk Properties</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">4.3.2.2. Interfaces Properties</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="SemiPy.Extractors.html">4.3. Extractors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SemiPy.Physics.html">4.4. SemiPy.Physics package</a></li>
 </ul>
 </li>
 </ul>
@@ -145,9 +146,9 @@
         
           <li><a href="api_doc.html"><span class="section-number">4. </span>API Documentation</a> &raquo;</li>
         
-          <li><a href="SemiPy.Devices.html"><span class="section-number">4.2. </span>Devices</a> &raquo;</li>
+          <li><a href="SemiPy.Devices.html"><span class="section-number">4.3. </span>Devices</a> &raquo;</li>
         
-      <li><span class="section-number">4.2.2.2. </span>Interfaces Properties</li>
+      <li><span class="section-number">4.3.2.2. </span>Interfaces Properties</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -167,76 +168,12 @@
            <div itemprop="articleBody">
             
   <div class="section" id="interfaces-properties">
-<h1><span class="section-number">4.2.2.2. </span>Interfaces Properties<a class="headerlink" href="#interfaces-properties" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-SemiPy.Devices.Interfaces.Electrical">
-<span id="electrical-interface-properties"></span><h2><span class="section-number">4.2.2.2.1. </span>Electrical Interface Properties<a class="headerlink" href="#module-SemiPy.Devices.Interfaces.Electrical" title="Permalink to this headline">¶</a></h2>
-<p>This module contains properties of electrical interfaces, i.e. contact resistance</p>
-<dl class="class">
-<dt id="SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance">
-<em class="property">class </em><code class="sig-prename descclassname">SemiPy.Devices.Interfaces.Electrical.</code><code class="sig-name descname">ElectricalContactResistance</code><span class="sig-paren">(</span><em class="sig-param">name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SemiPy/Devices/Interfaces/Electrical.html#ElectricalContactResistance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SemiPy.Devices.BaseDevice.DeviceProperty</span></code></p>
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.input_dimensionalities">
-<code class="sig-name descname">input_dimensionalities</code><em class="property"> = [&lt;Unit('1 / meter ** 2')&gt;]</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.input_dimensionalities" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.input_value_names">
-<code class="sig-name descname">input_value_names</code><em class="property"> = ['n']</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.input_value_names" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.optional_input_dimensionalities">
-<code class="sig-name descname">optional_input_dimensionalities</code><em class="property"> = [&lt;Unit('kelvin')&gt;]</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.optional_input_dimensionalities" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.optional_input_value_names">
-<code class="sig-name descname">optional_input_value_names</code><em class="property"> = ['temperature']</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.optional_input_value_names" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.prop_dimensionality">
-<code class="sig-name descname">prop_dimensionality</code><em class="property"> = &lt;Unit('meter * ohm')&gt;</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.prop_dimensionality" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.prop_name">
-<code class="sig-name descname">prop_name</code><em class="property"> = 'ElectricalContactResistance'</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Electrical.ElectricalContactResistance.prop_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<h1><span class="section-number">4.3.2.2. </span>Interfaces Properties<a class="headerlink" href="#interfaces-properties" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="electrical-interface-properties">
+<h2><span class="section-number">4.3.2.2.1. </span>Electrical Interface Properties<a class="headerlink" href="#electrical-interface-properties" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-SemiPy.Devices.Interfaces.Thermal">
-<span id="thermal-interface-properties"></span><h2><span class="section-number">4.2.2.2.2. </span>Thermal Interface Properties<a class="headerlink" href="#module-SemiPy.Devices.Interfaces.Thermal" title="Permalink to this headline">¶</a></h2>
-<p>This module contains properties of thermal interfaces, i.e. thermal contact resistance</p>
-<dl class="class">
-<dt id="SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance">
-<em class="property">class </em><code class="sig-prename descclassname">SemiPy.Devices.Interfaces.Thermal.</code><code class="sig-name descname">ThermalBoundaryConductance</code><span class="sig-paren">(</span><em class="sig-param">name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SemiPy/Devices/Interfaces/Thermal.html#ThermalBoundaryConductance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SemiPy.Devices.BaseDevice.DeviceProperty</span></code></p>
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.input_dimensionalities">
-<code class="sig-name descname">input_dimensionalities</code><em class="property"> = [&lt;Unit('kelvin')&gt;]</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.input_dimensionalities" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.input_value_names">
-<code class="sig-name descname">input_value_names</code><em class="property"> = ['temperature']</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.input_value_names" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.prop_dimensionality">
-<code class="sig-name descname">prop_dimensionality</code><em class="property"> = &lt;Unit('watt / kelvin / meter ** 2')&gt;</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.prop_dimensionality" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.prop_name">
-<code class="sig-name descname">prop_name</code><em class="property"> = 'ThermalBoundaryConductance'</em><a class="headerlink" href="#SemiPy.Devices.Interfaces.Thermal.ThermalBoundaryConductance.prop_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="thermal-interface-properties">
+<h2><span class="section-number">4.3.2.2.2. </span>Thermal Interface Properties<a class="headerlink" href="#thermal-interface-properties" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -248,10 +185,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="SemiPy.Extractors.html" class="btn btn-neutral float-right" title="4.3. Extractors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="SemiPy.Physics.html" class="btn btn-neutral float-right" title="4.4. SemiPy.Physics package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="SemiPy.Devices.Bulk.html" class="btn btn-neutral float-left" title="4.2.2.1. Bulk Properties" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="SemiPy.Devices.Bulk.html" class="btn btn-neutral float-left" title="4.3.2.1. Bulk Properties" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

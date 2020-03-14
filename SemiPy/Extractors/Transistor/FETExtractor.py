@@ -4,7 +4,7 @@ Extractor for extracting information of Field-Effect Transistors from IdVg and I
 """
 from SemiPy.Extractors.Extractors import Extractor
 from SemiPy.Datasets.IVDataset import IdVgDataSet, IdVdDataSet
-from SemiPy.Devices.FET.Transistor import NFET, PFET
+from SemiPy.Devices.Devices.FET.Transistor import NFET, PFET
 from physics.value import Value, ureg
 import warnings
 import numpy as np
@@ -43,7 +43,7 @@ class FETExtractor(Extractor):
         maximum transconductance = 3e-6 ampere / micrometer / volt
     """
 
-    def __init__(self, length, width, tox, epiox, device_polarity, vd_values=None, idvd_path=None, idvg_path=None, *args, **kwargs):
+    def __init__(self, length, width, gate_oxide, channel, device_polarity, vd_values=None, idvd_path=None, idvg_path=None, *args, **kwargs):
 
         super(FETExtractor, self).__init__(*args, **kwargs)
 
@@ -62,14 +62,14 @@ class FETExtractor(Extractor):
             self.idvd = IdVdDataSet(data_path=idvd_path)
 
         # now check the given properties
-        length, width, tox, epiox = self.__check_properties(length, width, tox, epiox)
+        length, width = self.__check_properties(length, width)
 
         # print('creating FET')
         # now create the FET model
         if device_polarity is 'p':
-            self.FET = PFET(length=length, width=width, tox=tox, dielectric_const=epiox)
+            self.FET = PFET(length=length, width=width, channel=channel, gate_oxide=gate_oxide)
         elif device_polarity is 'n':
-            self.FET = NFET(length=length, width=width, tox=tox, dielectric_const=epiox)
+            self.FET = NFET(length=length, width=width, channel=channel, gate_oxide=gate_oxide)
         else:
             raise ValueError('The device polarity must be either n or p, not {0}'.format(device_polarity))
 
@@ -242,7 +242,7 @@ class FETExtractor(Extractor):
         return tuple(keys)
 
     @staticmethod
-    def __check_properties(length, width, tox, epiox):
+    def __check_properties(length, width):
         # make sure given properties are values
         if not isinstance(length, Value):
             warnings.warn('Given length is not a value. Assuming units are micrometers.')
@@ -256,14 +256,14 @@ class FETExtractor(Extractor):
         else:
             assert width.unit.dimensionality == ureg.meter.dimensionality, 'Your length is not given in meters, but {0}.'.format(width.unit.dimensionality)
 
-        if not isinstance(tox, Value):
-            warnings.warn('Given Tox is not a value. Assuming units are nanometers.')
-            tox = Value(value=tox, unit=ureg.nanometer)
-        else:
-            assert tox.unit.dimensionality == ureg.meter.dimensionality, 'Your length is not given in meters, but {0}.'.format(tox.unit.dimensionality)
-
-        if not isinstance(epiox, Value):
-            epiox = Value(value=epiox)
+        # if not isinstance(tox, Value):
+        #     warnings.warn('Given Tox is not a value. Assuming units are nanometers.')
+        #     tox = Value(value=tox, unit=ureg.nanometer)
+        # else:
+        #     assert tox.unit.dimensionality == ureg.meter.dimensionality, 'Your length is not given in meters, but {0}.'.format(tox.unit.dimensionality)
+        #
+        # if not isinstance(epiox, Value):
+        #     epiox = Value(value=epiox)
 
         # now return all the properties
-        return length, width, tox, epiox
+        return length, width

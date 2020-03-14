@@ -13,6 +13,15 @@ SemiPy.Physics.DevicePhysics module
    :show-inheritance:
 
 
+Modeling module
+----------------
+
+.. automodule:: SemiPy.Physics.Modeling.TwoDFETs.Stanford2D
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 Module contents
 ---------------
 

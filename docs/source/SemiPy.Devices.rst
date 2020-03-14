@@ -10,7 +10,7 @@ Semiconductor Devices
 
    SemiPy.Devices.FET
 
-Semiconductor Device Properties
+Semiconductor Material Properties
 ---------------------------------
 .. toctree::
 
