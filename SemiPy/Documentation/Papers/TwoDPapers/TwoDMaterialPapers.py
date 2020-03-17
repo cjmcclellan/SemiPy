@@ -6,14 +6,16 @@ from SemiPy.Documentation.ScientificPaper import ScientificPaper
 import datetime
 
 
-class Stanford2DSPaper(ScientificPaper):
+class MoS2Thickness(ScientificPaper):
 
-    name = 'S2DS: Physics-based compact model for circuit simulationof two-dimensional semiconductor devices including non-idealities'
+    name = 'THE CRYSTAL STRUCTURE OF MOLYBDENITE'
 
-    authors = ['Saurabh V.Suryavanshi', 'Eric Pop']
+    authors = ['Roscoe G. Dickinson', 'Linus Pauling']
 
-    publisher = 'Journal of Applied Physics'
+    publisher = 'Journal of the American Chemical Society'
 
-    doi = '10.1063/1.4971404'
+    doi = '10.1021/ja01659a020'
 
-    date = datetime.datetime(2016, 12, 15)
+    date = datetime.datetime(1923, 6, 1)
+
+    synopsis = 'Gives the single layer thickness of MoS2 to be 6.15 Angstroms'

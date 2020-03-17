@@ -43,7 +43,7 @@ class FETExtractor(Extractor):
         maximum transconductance = 3e-6 ampere / micrometer / volt
     """
 
-    def __init__(self, length, width, gate_oxide, channel, device_polarity, vd_values=None, idvd_path=None, idvg_path=None, *args, **kwargs):
+    def __init__(self, FET, vd_values=None, idvd_path=None, idvg_path=None, *args, **kwargs):
 
         super(FETExtractor, self).__init__(*args, **kwargs)
 
@@ -61,17 +61,8 @@ class FETExtractor(Extractor):
         else:
             self.idvd = IdVdDataSet(data_path=idvd_path)
 
-        # now check the given properties
-        length, width = self.__check_properties(length, width)
-
-        # print('creating FET')
         # now create the FET model
-        if device_polarity is 'p':
-            self.FET = PFET(length=length, width=width, channel=channel, gate_oxide=gate_oxide)
-        elif device_polarity is 'n':
-            self.FET = NFET(length=length, width=width, channel=channel, gate_oxide=gate_oxide)
-        else:
-            raise ValueError('The device polarity must be either n or p, not {0}'.format(device_polarity))
+        self.FET = FET
 
         # add some simple checks on the data.  Make sure Ig is not too high, Is and Id are reasonably matched, etc.
 
