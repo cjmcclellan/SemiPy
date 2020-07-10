@@ -11,7 +11,7 @@ from SemiPy.helper.paths import get_abs_semipy_path
 from physics.value import Value, ureg
 
 
-# TODO: Should the extract take in the properties (L, W, oxide, channel) and build the FET or should the user create the FET then give to the Extractor?
+# TODO: Should the extractor take in the properties (L, W, oxide, channel) and build the FET or should the user create the FET then give to the Extractor?
 class TestFETExtractors(unittest.TestCase):
 
     def test_fetextraction(self):
