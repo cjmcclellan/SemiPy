@@ -13,3 +13,10 @@ requirements.txt file.
 `source env/bin/activate`
 
 `pip install -r requirements.txt`
+
+
+##### Windows
+Make sure to have python3 installed and callable on your machine.
+
+Using the Command Line, navigate to the directory you want install SemiPy.
+

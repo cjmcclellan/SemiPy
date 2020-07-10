@@ -3,6 +3,7 @@ Extractor for extracting information of from TLM data
 """
 from SemiPy.Extractors.Extractors import Extractor
 from SemiPy.Datasets.IVDataset import TLMDataSet
+from SemiPy.Devices.Devices.FET.Transistor import FET
 from SemiPy.Extractors.Transistor.FETExtractor import FETExtractor
 from physics.value import Value, ureg
 import os
@@ -43,7 +44,7 @@ class TLMExtractor(Extractor):
         >>> tlm.save_tlm_plots()
     """
 
-    def __init__(self, lengths, widths, tox, epiox, device_polarity, vd_values=None, idvg_path=None, *args, **kwargs):
+    def __init__(self, lengths, widths, channel, gate_oxide, FET_class, vd_values=None, idvg_path=None, *args, **kwargs):
 
         super(TLMExtractor, self).__init__(*args, **kwargs)
 
@@ -60,9 +61,13 @@ class TLMExtractor(Extractor):
                                                    ' lengths given for the data. ({0})'.format(idvg_data)
             for i, idvg in enumerate(idvg_data):
                 path = os.path.join(root, idvg)
-                self.FETs.append(FETExtractor(width=widths, length=lengths[i], epiox=epiox, tox=tox,
-                                              device_polarity=device_polarity, idvg_path=path,
+
+                fet = FET_class(gate_oxide=gate_oxide, channel=channel, width=widths, length=lengths[i])
+                self.FETs.append(FETExtractor(fet, idvg_path=path,
                                               vd_values=vd_values))
+                # self.FETs.append(FETExtractor(width=widths, length=lengths[i], epiox=epiox, tox=tox,
+                #                               device_polarity=device_polarity, idvg_path=path,
+                #                               vd_values=vd_values))
 
                 new_fet_vd_values = self.FETs[-1].idvg.get_secondary_indep_values()
 
