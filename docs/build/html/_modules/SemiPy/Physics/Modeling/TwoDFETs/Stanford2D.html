@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SemiPy.Physics.Modeling.TwoDFETs.Stanford2D &mdash; SemiPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> SemiPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../overview.html">1. Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples.html">2. Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api_doc.html">4. API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../publications.html">5. Scientific Publications</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">SemiPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>SemiPy.Physics.Modeling.TwoDFETs.Stanford2D</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for SemiPy.Physics.Modeling.TwoDFETs.Stanford2D</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains code for modeling 2D Schottky FETs.  This is adapted from &#39;&#39;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">SemiPy.Physics.DevicePhysics</span> <span class="kn">import</span> <span class="n">characteristic_length</span>
+<span class="kn">from</span> <span class="nn">SemiPy.Physics.Modeling.BaseModel</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">scipy.constants</span> <span class="kn">import</span> <span class="n">hbar</span><span class="p">,</span> <span class="n">electron_mass</span>
+<span class="kn">from</span> <span class="nn">SemiPy.Documentation.Papers.TwoDPapers.TwoDFETPapers</span> <span class="kn">import</span> <span class="n">Stanford2DSPaper</span>
+<span class="kn">from</span> <span class="nn">SemiPy.Documentation.ScientificPaper</span> <span class="kn">import</span> <span class="n">citation_decorator</span>
+
+
+<div class="viewcode-block" id="Stanford2DSModel"><a class="viewcode-back" href="../../../../../SemiPy.Physics.html#SemiPy.Physics.Modeling.TwoDFETs.Stanford2D.Stanford2DSModel">[docs]</a><span class="nd">@citation_decorator</span><span class="p">(</span><span class="n">Stanford2DSPaper</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Stanford2DSModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compact model for modeling traps, parasitic capacitances, velocity saturation, self-heating, and field effects of 2D FETs.  The</span>
+<span class="sd">    reference paper is &lt;citation&gt;, which gives full physical details on the model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">FET</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">Stanford2DSModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">h_mass</span> <span class="o">=</span> <span class="n">h_mass</span> <span class="o">*</span> <span class="n">electron_mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_mass</span> <span class="o">=</span> <span class="n">e_mass</span> <span class="o">*</span> <span class="n">electron_mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tox</span> <span class="o">=</span> <span class="n">tox</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tchannel</span> <span class="o">=</span> <span class="n">tchannel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epiox</span> <span class="o">=</span> <span class="n">epiox</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epichannel</span> <span class="o">=</span> <span class="n">epichannel</span>
+
+        <span class="c1"># now compute lambda</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_semi</span> <span class="o">=</span> <span class="n">characteristic_length</span><span class="p">(</span><span class="n">epichannel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">epichannel</span><span class="p">,</span> <span class="n">epiox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">epiox</span><span class="p">,</span> <span class="n">tchannel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tchannel</span><span class="p">,</span> <span class="n">tox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tox</span><span class="p">)</span>
+
+        <span class="c1"># placeholders for fitting parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flat_band</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_e</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_h</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fermi_level</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">def</span> <span class="nf">__compute_e</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vgs</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vapp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">          Ef--|   _______</span>
+<span class="sd">              |  /</span>
+<span class="sd">              | /</span>
+<span class="sd">         phi__|/</span>
+<span class="sd">        Args:</span>
+<span class="sd">            vgs:</span>
+<span class="sd">            phi:</span>
+<span class="sd">            x:</span>
+<span class="sd">            vapp:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_band</span> <span class="o">-</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">vgs</span>
+        <span class="c1"># if x is none, then get the e in the channel</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">phi</span>
+
+    <span class="k">def</span> <span class="nf">__compute_ev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vgs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_band</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_h</span> <span class="o">-</span> <span class="n">vgs</span>
+
+<div class="viewcode-block" id="Stanford2DSModel.transmission"><a class="viewcode-back" href="../../../../../SemiPy.Physics.html#SemiPy.Physics.Modeling.TwoDFETs.Stanford2D.Stanford2DSModel.transmission">[docs]</a>    <span class="k">def</span> <span class="nf">transmission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">phib</span><span class="p">,</span> <span class="n">hole</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">electron</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the transmission</span>
+<span class="sd">        Args:</span>
+<span class="sd">            E:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">hole</span> <span class="ow">or</span> <span class="n">electron</span><span class="p">,</span> <span class="s1">&#39;You have not selected hole or electron.  You must set one to True.&#39;</span>
+
+        <span class="k">if</span> <span class="n">hole</span><span class="p">:</span>
+            <span class="n">mass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_mass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_mass</span>
+
+        <span class="c1"># now compute the transmission</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="mi">5</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="n">E</span> <span class="o">-</span> <span class="n">phib</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">hbar</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__modes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">phib</span><span class="p">,</span> <span class="n">hole</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">electron</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Connor McClellan
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
