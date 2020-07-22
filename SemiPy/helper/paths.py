@@ -2,6 +2,19 @@ import os
 import pickle
 # import dill
 import importlib
+from SemiPy.config.settings import SemiPy_Path
+
+
+def get_abs_semipy_path(path):
+    """
+    Get the abs path of a file in SemiPy.
+    Args:
+        path (str): Should be the abs path to the file from SemiPy/ (i.e. SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt)
+
+    Returns:
+        absolute system path to the file
+    """
+    return os.path.join(SemiPy_Path, path)
 
 
 # confirm the directory or create it

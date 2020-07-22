@@ -108,6 +108,9 @@ class BiDirectionalDataSet(SetDataSet):
         if master_independent_value_range is not None and (fwd or bwd):
             change_i = self._get_sweep_index(array=super(BiDirectionalDataSet, self).get_column(self.master_independent,
                                                                                                 False, master_independent_value_range))
+            # if no inflection point, then just return the column data
+            if len(change_i) == 0:
+                return column_data
             change_i = change_i[1, 1]
         elif fwd or bwd:
             change_i = self.change_i

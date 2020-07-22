@@ -3,6 +3,7 @@ from physics.fundamental_constants import free_space_permittivity_F_div_cm, elec
 from SemiPy.Devices.Devices.BaseDevice import BaseDevice, Voltage
 from SemiPy.Devices.Devices.FET.TransistorProperties import CurrentDensity, Transconductance, SubthresholdSwing, Mobility
 import SemiPy.Devices.Materials.Properties as matprop
+from SemiPy.Physics.DevicePhysics import carrier_density
 from SemiPy.Devices.PhysicalProperty import CustomPhysicalProperty
 # from SemiPy.Devices.Materials.Properties.Interfaces.Electrical import ElectricalContactResistance
 # from SemiPy.Devices.Materials.Properties.Interfaces.Thermal import ThermalBoundaryConductance
@@ -22,7 +23,7 @@ class Transistor(BaseDevice):
         length (physics.Value): The length of the device.
         *args:
         **kwargs:
-    Example::
+    Example::q
 
     """
 
@@ -116,6 +117,10 @@ class FET(Transistor):
         # replace any Vg < Vt_avg with Vt_avg
         if isinstance(vg, np.ndarray):
             vg[vg < self.Vt_avg.value] = self.Vt_avg.value
+            # n = carrier_density(self.gate_oxide.capacitance, vg, self.Vt_avg.value)
+            # n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
+            #     / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
+
         try:
             n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
                 / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))

@@ -3,7 +3,7 @@ Module for Scientific Papers
 """
 import warnings
 
-list_of_publishers = ['Journal of Applied Physics']
+list_of_publishers = ['Journal of Applied Physics', 'Journal of the American Chemical Society']
 
 
 class ScientificPaper(object):

@@ -22,6 +22,7 @@ SemiPy is currently hosted on `github <https://github.com/cjmcclellan/SemiPy>`_.
    examples.rst
    installation.rst
    api_doc.rst
+   publications.rst
 
 
 Indices and tables

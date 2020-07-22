@@ -18,5 +18,3 @@ class TwoDMaterial(ThinFilm):
 
         super(TwoDMaterial, self).__init__(thickness, *args, **kwargs)
 
-        # save the number of layers
-        self.layer_number = layer_number

@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">2. Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">3. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_doc.html">4. API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../publications.html">5. Scientific Publications</a></li>
 </ul>
 
             
@@ -152,9 +153,8 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">physics.fundamental_constants</span> <span class="kn">import</span> <span class="n">free_space_permittivity_F_div_cm</span><span class="p">,</span> <span class="n">electron_charge_C</span>
 <span class="c1"># from physics.helper import assert_value</span>
-<span class="kn">from</span> <span class="nn">physics.units</span> <span class="kn">import</span> <span class="n">ureg</span>
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="c1"># from physics.value import Value</span>
+<span class="kn">from</span> <span class="nn">physics.value</span> <span class="kn">import</span> <span class="n">Value</span><span class="p">,</span> <span class="n">ureg</span>
 
 
 <div class="viewcode-block" id="compute_mobility"><a class="viewcode-back" href="../../../SemiPy.Physics.html#SemiPy.Physics.DevicePhysics.compute_mobility">[docs]</a><span class="k">def</span> <span class="nf">compute_mobility</span><span class="p">(</span><span class="n">gm</span><span class="p">,</span> <span class="n">cox</span><span class="p">,</span> <span class="n">vd</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -170,7 +170,7 @@
 
 
 <div class="viewcode-block" id="carrier_density"><a class="viewcode-back" href="../../../SemiPy.Physics.html#SemiPy.Physics.DevicePhysics.carrier_density">[docs]</a><span class="k">def</span> <span class="nf">carrier_density</span><span class="p">(</span><span class="n">cox</span><span class="p">,</span> <span class="n">vg</span><span class="p">,</span> <span class="n">vt</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">cox</span> <span class="o">*</span> <span class="p">(</span><span class="n">vg</span> <span class="o">-</span> <span class="n">vt</span><span class="p">)</span> <span class="o">/</span> <span class="n">electron_charge_C</span></div>
+    <span class="k">return</span> <span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ureg</span><span class="o">.</span><span class="n">coulomb</span><span class="p">)</span> <span class="o">*</span> <span class="n">cox</span> <span class="o">*</span> <span class="p">(</span><span class="n">vg</span> <span class="o">-</span> <span class="n">vt</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">electron_charge_C</span> <span class="o">*</span> <span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ureg</span><span class="o">.</span><span class="n">volt</span> <span class="o">*</span> <span class="n">ureg</span><span class="o">.</span><span class="n">farad</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="characteristic_length"><a class="viewcode-back" href="../../../SemiPy.Physics.html#SemiPy.Physics.DevicePhysics.characteristic_length">[docs]</a><span class="k">def</span> <span class="nf">characteristic_length</span><span class="p">(</span><span class="n">epichannel</span><span class="p">,</span> <span class="n">epiox</span><span class="p">,</span> <span class="n">tchannel</span><span class="p">,</span> <span class="n">tox</span><span class="p">):</span>
