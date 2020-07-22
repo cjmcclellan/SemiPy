@@ -22,3 +22,7 @@ class SiO2(MetalOxide):
     bandgap = matprop.Bulk.Electrical.BandGap(value=Value(8.6, unit=ureg.electron_volt))
 
     relative_permittivity = matprop.Bulk.Electrical.RelativePermittivity(value=Value(3.9, ureg.dimensionless))
+
+    thermal_conductivity = matprop.Bulk.Thermal.ThermalConductivity(value=Value(1, ureg.watt/(ureg.kelvin*ureg.meter)),
+                                                                    input_values={'temperature': Value(300, ureg.kelvin)})
+

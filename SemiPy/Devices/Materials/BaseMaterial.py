@@ -3,6 +3,7 @@ This module contains the Base Material class for all Materials
 """
 import SemiPy.Devices.Materials.Properties.Bulk.Electrical as mpbe
 from SemiPy.Physics.DevicePhysics import compute_cox
+from physics.fundamental_constants import free_space_permittivity_F_div_cm
 from physics.value import Value, ureg
 
 

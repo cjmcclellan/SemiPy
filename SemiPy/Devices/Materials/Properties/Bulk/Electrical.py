@@ -52,6 +52,15 @@ class ElectronMass(PhysicalProperty):
 
 class HoleMass(PhysicalProperty):
 
-    prop_name = 'ElectronMass'
+    prop_name = 'HoleMass'
     prop_dimensionality = ureg.kilogram
+
+
+class SaturationVelocity(PhysicalProperty):
+
+    prop_name = 'SaturationVelocity'
+    prop_dimensionality = ureg.meter / ureg.second
+
+    input_value_names = ['temperature']
+    input_dimensionalities = [ureg.kelvin]
 

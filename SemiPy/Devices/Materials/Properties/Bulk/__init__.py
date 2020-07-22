@@ -1,1 +1,1 @@
-from SemiPy.Devices.Materials.Properties.Bulk import Electrical, Thermal
+from SemiPy.Devices.Materials.Properties.Bulk import Electrical, Thermal, Basic

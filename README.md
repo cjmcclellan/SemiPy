@@ -19,4 +19,9 @@ requirements.txt file.
 Make sure to have python3 installed and callable on your machine.
 
 Using the Command Line, navigate to the directory you want install SemiPy.
+# Install
 
+## Linux
+make sure to install orca for plotting by running
+
+`sudo apt install orca`

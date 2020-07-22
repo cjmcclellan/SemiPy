@@ -4,3 +4,5 @@ git+https://github.com/cjmcclellan/dash_cjm
 pandas
 matplotlib
 django_plotly_dash
+git+https://github.com/cjmcclellan/dash_cjm
+psutil

@@ -114,3 +114,16 @@ class PhysicalProperty(object):
 
     def __str__(self):
         return '{0} = {1}'.format(self.name, self.value)
+
+
+class CustomPhysicalProperty(PhysicalProperty):
+
+    prop_name = None
+    prop_dimensionality = None
+
+    def __init__(self, name, dimensionality):
+
+        self.prop_name = name
+        self.prop_dimensionality = dimensionality
+
+        super(PhysicalProperty, self).__init__()
