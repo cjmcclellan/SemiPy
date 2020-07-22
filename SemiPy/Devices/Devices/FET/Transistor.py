@@ -120,6 +120,7 @@ class FET(Transistor):
             # n = carrier_density(self.gate_oxide.capacitance, vg, self.Vt_avg.value)
             # n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
             #     / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
+
         try:
             n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
                 / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
