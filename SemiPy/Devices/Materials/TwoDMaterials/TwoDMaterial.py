@@ -8,9 +8,15 @@ class TwoDMaterial(ThinFilm):
 
     layer_number = None
 
-    def __init__(self, layer_number, *args, **kwargs):
+    layer_thickness = None
 
-        super(TwoDMaterial, self).__init__(*args, **kwargs)
+    def __init__(self, layer_number, thickness=None, *args, **kwargs):
+
+        if thickness is None:
+            assert self.layer_thickness is not None, 'You must provide a thickness for this material.'
+            thickness = layer_number * self.layer_thickness.value
+
+        super(TwoDMaterial, self).__init__(thickness, *args, **kwargs)
 
         # save the number of layers
         self.layer_number = layer_number

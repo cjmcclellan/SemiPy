@@ -3,6 +3,7 @@ from physics.fundamental_constants import free_space_permittivity_F_div_cm, elec
 from SemiPy.Devices.Devices.BaseDevice import BaseDevice, Voltage
 from SemiPy.Devices.Devices.FET.TransistorProperties import CurrentDensity, Transconductance, SubthresholdSwing, Mobility
 import SemiPy.Devices.Materials.Properties as matprop
+from SemiPy.Devices.PhysicalProperty import CustomPhysicalProperty
 # from SemiPy.Devices.Materials.Properties.Interfaces.Electrical import ElectricalContactResistance
 # from SemiPy.Devices.Materials.Properties.Interfaces.Thermal import ThermalBoundaryConductance
 from SemiPy.Devices.Materials.BaseMaterial import Semiconductor
@@ -44,6 +45,9 @@ class Transistor(BaseDevice):
 
 
 class FET(Transistor):
+
+    mobility_temperature_exponent = CustomPhysicalProperty('mobility_temperature_exponent',
+                                                           ureg.dimensionless)
 
     def __init__(self, gate_oxide, *args, **kwargs):
         """
@@ -109,9 +113,10 @@ class FET(Transistor):
 
     def vg_to_n(self, vg):
         # adding extra values to make the units be centimeter ** -2
-        try:
-            # replace any Vg < Vt_avg with Vt_avg
+        # replace any Vg < Vt_avg with Vt_avg
+        if isinstance(vg, np.ndarray):
             vg[vg < self.Vt_avg.value] = self.Vt_avg.value
+        try:
             n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
                 / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
 

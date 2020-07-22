@@ -3,6 +3,7 @@ This module contains the Base Material class for all Materials
 """
 import SemiPy.Devices.Materials.Properties.Bulk.Electrical as mpbe
 from physics.fundamental_constants import free_space_permittivity_F_div_cm
+from physics.value import Value, ureg
 
 
 class BaseMaterial(object):
@@ -27,7 +28,7 @@ class ThinFilm(BaseMaterial):
 
     thickness = None
 
-    def __init__(self, thickness):
+    def __init__(self, thickness, *args, **kwargs):
         self.thickness = thickness
         # with the thickness, compute the capacitance
         self.capacitance = (free_space_permittivity_F_div_cm * self.relative_permittivity.value / self.thickness).adjust_unit(

@@ -14,11 +14,11 @@ class TestFETExtractors(unittest.TestCase):
     def test_fetextraction(self):
 
         # path = '/home/connor/Documents/Stanford_Projects/Extractions/src/SampleData/FETExampleData/nano_patterning.csv'
-        idvd_path = '/home/connor/Documents/Stanford_Projects/Extractions/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vd.txt'
-        idvg_path = '/home/connor/Documents/Stanford_Projects/Extractions/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt'
+        # idvd_path = '/home/connor/Documents/Stanford_Projects/Extractions/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vd.txt'
+        # idvg_path = '/home/connor/Documents/Stanford_Projects/Extractions/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt'
         #
-        # idvd_path = '/home/connor/Documents/Stanford_Projects/Extractions/fetextraction/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vd.txt'
-        # idvg_path = '/home/connor/Documents/Stanford_Projects/Extractions/fetextraction/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt'
+        idvd_path = '/home/connor/Documents/Stanford_Projects/Extractions/fetextraction/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vd.txt'
+        idvg_path = '/home/connor/Documents/Stanford_Projects/Extractions/fetextraction/SemiPy/SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt'
 
         gate_oxide = SiO2(thickness=Value(30, ureg.nanometer))
         channel = MoS2(layer_number=1)
