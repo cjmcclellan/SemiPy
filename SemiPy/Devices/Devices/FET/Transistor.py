@@ -20,7 +20,7 @@ class Transistor(BaseDevice):
         length (physics.Value): The length of the device.
         *args:
         **kwargs:
-    Example::
+    Example::q
 
     """
 

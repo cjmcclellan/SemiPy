@@ -24,6 +24,8 @@ class TestFETExtractors(unittest.TestCase):
 
         fet = nTFT(gate_oxide=gate_oxide, channel=channel, width=Value(1, ureg.micrometer), length=Value(1, ureg.micrometer))
 
+        SchotkkyModel(fet, )
+
         result = FETExtractor(FET=fet, idvg_path=idvg_path, idvd_path=idvd_path)
 
         self.assert_value_equals(result.FET.Vt_avg, Value(3.78, ureg.volt), 'Vt avg')
