@@ -18,7 +18,7 @@ class MoS2(TwoDMaterial, Semiconductor):
 
     relative_permittivity = matprop.Bulk.Electrical.RelativePermittivity(value=Value(4.2, ureg.dimensionless))
 
-    thermal_conductivity = matprop.Bulk.Thermal.ThermalConductivity(value=Value(30, ureg.watt/(ureg.kelvin*ureg.meter)),
+    thermal_conductivity = matprop.Bulk.Thermal.ThermalConductivity(value=Value(90, ureg.watt/(ureg.kelvin*ureg.meter)),
                                                                     input_values={'temperature': Value(300, ureg.kelvin)})
 
     saturation_velocity = matprop.Bulk.Electrical.SaturationVelocity(value=Value(3.4e6, ureg.centimeter/ureg.seconds),

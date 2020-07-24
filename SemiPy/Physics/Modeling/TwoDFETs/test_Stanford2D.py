@@ -15,25 +15,25 @@ class TestStanford2DSModel(unittest.TestCase):
 
     def test_stanford2dsmodel(self):
 
-        gate_oxide = SiO2(thickness=Value(5, ureg.nanometer))
+        gate_oxide = SiO2(thickness=Value(1.0, ureg.nanometer))
         channel = MoS2(layer_number=1, thickness=Value(0.6, ureg.nanometer))
 
-        fet = TFT(channel=channel, gate_oxide=gate_oxide, length=Value(0.4, ureg.micrometer),
-                  width=Value(1, ureg.micrometer))
+        fet = TFT(channel=channel, gate_oxide=gate_oxide, length=Value(0.050, ureg.micrometer),
+                  width=Value(0.05, ureg.micrometer))
 
         fet.Vt_avg = Value(0.0, ureg.volt)
 
-        fet.max_mobility = Value(30, ureg.centimeter**2 / (ureg.volt * ureg.second))
+        fet.max_mobility = Value(35, ureg.centimeter**2 / (ureg.volt * ureg.second))
 
-        fet.mobility_temperature_exponent = Value(1.2, ureg.dimensionless)
+        fet.mobility_temperature_exponent = Value(0.0, ureg.dimensionless)
 
         S2DModel = Stanford2DSModel(FET=fet)
 
-        Vds = ModelInput(0, 3.0, num=50, unit=ureg.volt)
+        Vds = ModelInput(0, 1.0, num=100, unit=ureg.volt)
 
-        Vgs = ModelInput(10, 20, num=2, unit=ureg.volt)
+        Vgs = ModelInput(0.2, 1.0, num=5, unit=ureg.volt)
 
-        S2DModel.model_output(Vds, Vgs)
+        S2DModel.model_output(Vds, Vgs, ambient_temperature=Value(300, ureg.kelvin))
 
 
 
