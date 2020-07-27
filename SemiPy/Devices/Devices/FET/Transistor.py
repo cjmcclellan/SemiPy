@@ -49,6 +49,7 @@ class FET(Transistor):
 
     mobility_temperature_exponent = CustomPhysicalProperty('mobility_temperature_exponent',
                                                            ureg.dimensionless)
+    max_mobility = Mobility(name='maximum field-effect mobility')
 
     def __init__(self, gate_oxide, *args, **kwargs):
         """
@@ -65,7 +66,7 @@ class FET(Transistor):
         self.gate_oxide = gate_oxide
 
         # placeholders
-        self.max_mobility = Mobility(name='maximum field-effect mobility')
+        # self.max_mobility = Mobility(name='maximum field-effect mobility')
         self._add_publish_property('max_mobility')
         self.max_gm = Transconductance(name='maximum transconductance')
         self._add_publish_property('max_gm')
@@ -260,3 +261,9 @@ class AmbipolarFET(FET):
     @property
     def PBranch(self):
         return self._PFET
+
+
+class BackGatedFET(FET):
+
+    def __init__(self, *args, **kwargs):
+        super(BackGatedFET, self).__init__(*args, **kwargs)

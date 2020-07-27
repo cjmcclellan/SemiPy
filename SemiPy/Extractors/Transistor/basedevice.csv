@@ -1,7 +1,7 @@
 Property,Value,Unit
 width,1,micrometer
 length,1,micrometer
-max_mobility,21.09,centimeter ** 2 / second / volt
+max_mobility,15.82,centimeter ** 2 / second / volt
 max_gm,3.64,microsiemens / micrometer
 Vt_avg,3.78,volt
 hysteresis,-0.56,volt

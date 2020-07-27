@@ -8,12 +8,20 @@ import math
 from physics.value import Value, ureg
 
 
+def units_decorator():
+    pass
+
+
 def compute_mobility(gm, cox, vd, l, w=None):
     result = gm * l / (cox * vd)
     if w is None:
         return result / w
     else:
         return result
+
+
+def compute_sheet_resistance(carrier_density, mobility):
+    return 1 / (carrier_density * mobility * electron_charge_C)
 
 
 def compute_cox(dielectric_constant, tox):
