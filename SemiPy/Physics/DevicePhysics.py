@@ -8,8 +8,11 @@ import math
 from physics.value import Value, ureg
 
 
-def units_decorator():
-    pass
+def units_decorator(citation):
+    def dec(obj):
+        obj.__doc__ = obj.__doc__.replace('<citation>', citation.doc_string_ref())
+        return obj
+    return dec
 
 
 def compute_mobility(gm, cox, vd, l, w=None):

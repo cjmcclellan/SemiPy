@@ -119,18 +119,23 @@ class Stanford2DSModel(BaseModel):
         return ambient_mobility * (temperature / ambient_temperature) ** (self.FET.mobility_temperature_exponent * -1)
 
     def compute_v0(self):
-        Nop = 1 / (math.exp(self.hwop / (self.k * Value(295, ureg.kelvin))))
+        Nop = self.compute_nop(Value(295, ureg.kelvin))
+        # Nop = 1 / (math.exp(self.hwop / (self.k * Value(295, ureg.kelvin))))
         return self.FET.channel.saturation_velocity * (Nop + 1)
 
+    def compute_nop(self, temp):
+        return 1 / (math.exp(self.hwop / (self.k * temp)) - 1)
+
     def compute_saturation_velocity(self, Temp):
-        Nop = 1 / (math.exp(self.hwop / (self.k * Temp)))
+        Nop = self.compute_nop(Temp)
         return self.vO / (Nop + 1)
 
     def compute_mobility_velocity_saturation(self, effective_mobility, Vds, Temp):
         #return effective_mobility
         field = Vds / self.FET.length.adjust_unit(ureg.centimeter)
+        vsat = self.compute_saturation_velocity(Temp)
         #return effective_mobility / (1 + (effective_mobility * field / self.FET.channel.saturation_velocity)**self.eta)**(1/self.eta)
-        return effective_mobility / (1 + (effective_mobility * field / self.compute_saturation_velocity(Temp))**self.eta)**(1/self.eta)
+        return effective_mobility / (1 + (effective_mobility * field / vsat)**self.eta)**(1/self.eta), vsat
 
     def compute_temperature(self, power, ambient_temperature, metal_thermal_resistance=None):
         if metal_thermal_resistance is None:
@@ -149,11 +154,11 @@ class Stanford2DSModel(BaseModel):
         return average_temperature
 
     #def model_output(self, Vds, Vgs, ambient_temperature=None):
-    def model_output(self, Vds, Vgs, heating=True, vsat=True, ambient_temperature=None, iterations=2):
+    def model_output(self, Vds, Vgs, heating=True, vsat=True, ambient_temperature=None, iterations=2, linestyle='-'):
         mobility_temp = Value(295, ureg.kelvin)
         if ambient_temperature is None:
             ambient_temperature = Value(295, ureg.kelvin)
-
+        colors = ['C0', 'C2', 'C3']
         assert isinstance(Vds, ModelInput)
         assert isinstance(Vgs, ModelInput)
 
@@ -173,6 +178,7 @@ class Stanford2DSModel(BaseModel):
             idvd_data['Id_{0}'.format(vg)] = []
             idvd_data['T_{0}'.format(vg)] = []
             idvd_data['Add_{0}'.format(vg)] = []
+            idvd_data['vsat_{0}'.format(vg)] = []
         idvd_data['Vds'] = Vds.range
 
         # now loop through the Vgs values
@@ -198,7 +204,8 @@ class Stanford2DSModel(BaseModel):
                                                                          temperature)
                 # now compute the mobility at this field
                 if vsat:
-                    effective_mobility = self.compute_mobility_velocity_saturation(effective_mobility, vds, temperature)
+                    effective_mobility, vsat = self.compute_mobility_velocity_saturation(effective_mobility, vds, temperature)
+                    idvd_data['vsat_{0}'.format(vgs)].append(vsat)
 
                 # now calculate the new current
                 prev_Id = self.compute_drift_current(vds, effective_mobility, vgs, prev_Id).base_units()
@@ -208,27 +215,36 @@ class Stanford2DSModel(BaseModel):
         I_units = '\u03BCA/\u03BCm'
         plt.rc('xtick', labelsize=12)  # fontsize of the tick labels
         plt.rc('ytick', labelsize=12)
-        for vgs in Vgs.range:
-            plt.scatter(idvd_data['Vds'], [i * 1e6 for i in idvd_data['Id_{0}'.format(vgs)]],
-                     label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10))
+        for i_vg, vgs in enumerate(Vgs.range):
+            plt.plot(idvd_data['Vds'], [i * 1e6 for i in idvd_data['Id_{0}'.format(vgs)]], colors[i_vg] + linestyle,
+                     label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), linewidth=4)
         plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
         plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
         plt.ylabel('$I_D$ ({0})'.format(I_units), fontsize=16)
         # plt.legend()
         # plt.show()
-        plt.savefig('IdVd_plot_at_{0}'.format(ambient_temperature))
-        plt.show()
 
-        for vgs in Vgs.range:
-            plt.scatter(idvd_data['Vds'], idvd_data['T_{0}'.format(vgs)],
-                     label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10))
-        plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
-        plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
-        plt.ylabel('Temperature (K)', fontsize=16)
+        # for vgs in Vgs.range:
+        #     plt.scatter(idvd_data['Vds'], idvd_data['T_{0}'.format(vgs)],
+        #              label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10))
+        # plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
+        # plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
+        # plt.ylabel('Temperature (K)', fontsize=16)
         # plt.legend()
         # plt.show()
-        plt.savefig('Temp_plot_at_{0}'.format(ambient_temperature))
-        plt.show()
+        # plt.savefig('Temp_plot_at_{0}'.format(ambient_temperature))
+        # plt.show()
+
+        # for vgs in Vgs.range:
+        #     plt.scatter(idvd_data['Vds'], idvd_data['vsat_{0}'.format(vgs)],
+        #                 label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10))
+        # plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
+        # plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
+        # plt.ylabel('vsat (cm/s)', fontsize=16)
+        # plt.legend()
+        # plt.show()
+        # plt.savefig('vsat_plot_at_{0}'.format(ambient_temperature))
+        # plt.show()
 
         idvd_plot = BasicPlot(x_label='VDS (V)', y_label='ID ({0})'.format(I_units), marker_size=8.0)
 

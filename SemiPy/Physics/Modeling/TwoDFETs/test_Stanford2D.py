@@ -9,6 +9,7 @@ from SemiPy.Devices.Materials.Semiconductors.BulkSemiconductors import Silicon
 from SemiPy.Devices.Devices.FET.ThinFilmFET import TFT
 from physics.value import Value, ureg
 from SemiPy.Physics.Modeling.BaseModel import ModelInput
+import matplotlib.pyplot as plt
 
 
 class Test2DFETModels(unittest.TestCase):
@@ -19,12 +20,12 @@ class Test2DFETModels(unittest.TestCase):
         channel = MoS2(layer_number=1, thickness=Value(0.6, ureg.nanometer))
         substrate = Silicon()
 
-        fet = TFT(channel=channel, gate_oxide=gate_oxide, length=Value(10, ureg.nanometer),
+        fet = TFT(channel=channel, gate_oxide=gate_oxide, length=Value(50, ureg.nanometer),
                   width=Value(0.05, ureg.micrometer), substrate=substrate)
 
         fet.Vt_avg.set(Value(0.19, ureg.volt))
 
-        fet.Rc.set(Value(150.0, ureg.ohm * ureg.micrometer),
+        fet.Rc.set(Value(100.0, ureg.ohm * ureg.micrometer),
                    input_values={'n': Value(1e13, ureg.centimeter**-2)})
 
         fet.max_mobility.set(Value(40, ureg.centimeter**2 / (ureg.volt * ureg.second)),
@@ -34,15 +35,20 @@ class Test2DFETModels(unittest.TestCase):
 
         S2DModel = Stanford2DSModel(FET=fet)
 
-        Vds = ModelInput(0.0, 1.0, num=100, unit=ureg.volt)
+        Vds = ModelInput(0.0, 1.0, num=70, unit=ureg.volt)
 
-        Vgs = ModelInput(0.2, 1.2, num=5, unit=ureg.volt)
+        Vgs = ModelInput(0.2, 1.0, num=3, unit=ureg.volt)
 
-        # temps = [310, 355, 400]
-        temps = [310]
-        for temp in temps:
-            S2DModel.model_output(Vds, Vgs, heating=False, vsat=True, ambient_temperature=Value(temp, ureg.kelvin))
+        temps = [290, 400]
+        linestyles = ['-', '--']
 
+        # temps = [310]
+        for temp, linestyle in zip(temps, linestyles):
+            S2DModel.model_output(Vds, Vgs, heating=True, vsat=True,
+                                  ambient_temperature=Value(temp, ureg.kelvin), linestyle=linestyle)
+
+        plt.savefig('IdVd_plot_at')
+        plt.show()
 
 
 # if __name__ == '__main__':
