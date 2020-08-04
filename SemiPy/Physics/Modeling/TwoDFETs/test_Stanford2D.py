@@ -10,13 +10,14 @@ from SemiPy.Devices.Devices.FET.ThinFilmFET import TFT
 from physics.value import Value, ureg
 from SemiPy.Physics.Modeling.BaseModel import ModelInput
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Test2DFETModels(unittest.TestCase):
 
-    def test_stanford2dsmodel(self):
+    def test_stanford2dsmodel(self, ox=3.0):
 
-        gate_oxide = SiO2(thickness=Value(1.0, ureg.nanometer))
+        gate_oxide = SiO2(thickness=Value(ox, ureg.nanometer))
         channel = MoS2(layer_number=1, thickness=Value(0.6, ureg.nanometer))
         substrate = Silicon()
 
@@ -35,21 +36,40 @@ class Test2DFETModels(unittest.TestCase):
 
         S2DModel = Stanford2DSModel(FET=fet)
 
-        Vds = ModelInput(0.0, 1.0, num=70, unit=ureg.volt)
+        Vds = ModelInput(0.4, 1.2, num=3, unit=ureg.volt)
 
-        Vgs = ModelInput(0.2, 1.0, num=3, unit=ureg.volt)
+        Vgs = ModelInput(0.0, 1.0, num=70, unit=ureg.volt)
 
         temps = [290, 400]
         linestyles = ['-', '--']
 
         # temps = [310]
-        for temp, linestyle in zip(temps, linestyles):
-            S2DModel.model_output(Vds, Vgs, heating=True, vsat=True,
-                                  ambient_temperature=Value(temp, ureg.kelvin), linestyle=linestyle)
+        #for temp, linestyle in zip(temps, linestyles):
+         #   S2DModel.model_output(Vds, Vgs, heating=True, vsat=True,
+          #                        ambient_temperature=Value(temp, ureg.kelvin), linestyle=linestyle)
 
-        plt.savefig('IdVd_plot_at')
-        plt.show()
+        #plt.savefig('IdVd_plot_at')
+        #plt.show()
 
+        #S2DModel.compute_quantum_cap(295, 1)
+        #S2DModel.compute_diffusion_current(295, .1, 0.4)
+
+
+        vg_array = np.arange(0, 0.4, 0.01)
+        vd_array = np.arange(.4, 1.2, 0.4)
+        S2DModel.plot_diffusion_current(295,  vg_array, vd_array)
+
+
+        vg_array = np.arange(-0, 1.01, 0.01)
+        #S2DModel.compute_quantum_cap_array(295, vg_array)
+
+
+
+# if __name__ == '__main__':
+#     test = Test2DFETModels()
+#     test.test_stanford2dsmodel(30.0)
+#     test.test_stanford2dsmodel(3.0)
+#     plt.show()
 
 # if __name__ == '__main__':
 #     test = TestFETExtractors()

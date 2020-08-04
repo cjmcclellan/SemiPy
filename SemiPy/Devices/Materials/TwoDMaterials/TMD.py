@@ -26,6 +26,9 @@ class MoS2(TwoDMaterial, Semiconductor):
     layer_thickness = matprop.Bulk.Basic.Thickness(value=Value(0.615, ureg.nanometer),
                                                    citation=MonolayerMoS2ThicknessDickinson)
 
+    #ADDED
+    bandgap = matprop.Bulk.Electrical.BandGap(value=Value(1.8, ureg.electron_volt))
+
     def __init__(self, *args, **kwargs):
         super(MoS2, self).__init__(*args, **kwargs)
 

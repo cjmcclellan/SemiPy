@@ -9,6 +9,7 @@ import math
 from SemiPy.Documentation.Papers.TwoDPapers.TwoDFETPapers import Stanford2DSPaper
 from SemiPy.Documentation.ScientificPaper import citation_decorator
 from physics.value import Value, ureg
+from physics.fundamental_constants import free_space_permittivity_F_div_cm
 from physics.fundamental_constants import electron_charge_C
 import matplotlib.pyplot as plt
 from SemiPy.Devices.Interfaces.Interface import import_interface
@@ -33,10 +34,23 @@ class Stanford2DSModel(BaseModel):
     # ksub = Value(150, ureg.watt/(ureg.kelvin*ureg.meter))
 
     eta = 5
-
     hwop = Value(35e-3, ureg.eV)
-
     k = Value(scipy.constants.physical_constants["Boltzmann constant in eV/K"][0], ureg.eV/ureg.kelvin)
+    k_J = Value(scipy.constants.physical_constants["Boltzmann constant"][0], ureg.J/ ureg.kelvin)
+    hcross = Value(scipy.constants.physical_constants["reduced Planck constant"][0], ureg.J * ureg.seconds)
+    q = Value(scipy.constants.physical_constants["elementary charge"][0] , ureg.coulombs)
+
+    #Constants for Quantum Capacitance Calculation that need to be defined
+    WFTG = Value(4.3,ureg.volt) #Top Gate Work Function [V]
+    WFBG = Value(4.3,ureg.volt) #Bottom Gate Work Function [V]
+    VFBT = Value(0.305, ureg.volt) #Top Gate Cutoff voltage[V]
+    VFBB = Value(0.305, ureg.volt)  #Bottom Gate Cutoff voltage[V]
+
+    # WFTG = 4.3
+    # WFBG = 4.3
+    # VFBT = 0.305
+    # VFBB =0.305
+
 
     def __init__(self, FET, *args, **kwargs):
 
@@ -57,8 +71,9 @@ class Stanford2DSModel(BaseModel):
 
         self.vO = self.compute_v0()
 
+
     def compute_metal_thermal_resistance(self):
-        # using 1 for now to account for the contact resistance
+        #using 1 for now to account for the contact resistance
         km = Value(1, ureg.watt / (ureg.meter * ureg.kelvin))
         tm = Value(50, ureg.nanometer)
         Lhm = (tm * self.FET.gate_oxide.thickness * km / self.FET.gate_oxide.thermal_conductivity)**.5
@@ -153,7 +168,422 @@ class Stanford2DSModel(BaseModel):
 
         return average_temperature
 
-    #def model_output(self, Vds, Vgs, ambient_temperature=None):
+    def compute_quantum_cap(self, ambient_temperature, Vgs):
+
+        T = Value(ambient_temperature, ureg.kelvin)
+        # Material Parameters
+        self.g = 2  # Spin Degenracy
+        self.gv1 = 1;  # Degenracy of first valley
+        self.gv2 = 1;  # Degeneracy of second valley
+        self.me1_eff = Value(0.45 * scipy.constants.electron_mass, ureg.kilograms)  # Effective mass of first valley
+        self.me2_eff = Value(0.45 * scipy.constants.electron_mass, ureg.kilograms)   # Effective mass of second valley
+        self.vth = self.k_J * T / self.q
+        self.delEC = 3 * self.vth  # Energy difference from the first valley(Set high to ignore this valley in charge calculations)
+        self.epsilon_channel = self.FET.channel.relative_permittivity * free_space_permittivity_F_div_cm
+        self.d = self.FET.channel.thickness.base_units() #channel thickness
+
+        self.epsilon_ox = self.FET.gate_oxide.relative_permittivity * free_space_permittivity_F_div_cm
+        self.EOT = self.FET.gate_oxide.thickness
+        #self.epsilon_ox_b =
+        #self.EOTB =
+        self.cox_t = (self.epsilon_ox / self.EOT).adjust_unit(ureg.coulombs / (ureg.volts * ureg.meter ** 2))
+        self.cox_b = (self.epsilon_ox / self.EOT).adjust_unit(ureg.coulombs / (ureg.volts * ureg.meter ** 2))
+        #Using Values From Matlab
+        #self.cox_t = Value((20 * 8.854 * 1e-12) / (3e-9), ureg.coulombs / (ureg.volts * ureg.meter ** 2))
+        #self.cox_b = Value((1 * 8.854 * 1e-12) / (200e-9), ureg.coulombs / (ureg.volts * ureg.meter ** 2))
+
+        #Calculate electrostatic screening lengths
+        self.lambdaT = (self.epsilon_channel * self.d / self.cox_t) ** (1/2)
+        self.lambdaB = (self.epsilon_channel * self.d/ self.cox_b) ** (1/2)
+        self.A = (self.lambdaT ** (-2) + self.lambdaB ** (-2)) ** (1/2)
+
+        # Calculate Effective density of states for each valley
+        self.NDOS1 = (self.gv1 * self.me1_eff * self.k_J * T) / (pi * self.hcross ** 2)
+        self.NDOS2 = (self.gv2 * self.me2_eff * self.k_J * T) / (pi * self.hcross ** 2)
+        self.NDOS = self.NDOS2
+        self.alpha = self.NDOS1 / self.NDOS
+        self.beta = self.NDOS2 / self.NDOS
+        self.Nimp = Value( 3.5e11 ,ureg.meters ** -2)
+
+        VDS = Value(0.0, ureg.volts)
+        VS = Value(0.0, ureg.volts)
+        VD = VS + VDS
+        VG = [Vgs, Vgs+.01]
+        xg_length = len(VG)
+
+        array_size = 10000
+
+        self.phi = np.zeros(array_size)
+        self.f = np.zeros(array_size)
+        self.fd = np.zeros(array_size)
+        self.phis = np.zeros(array_size)
+        self.n2d = np.zeros(len(VG))
+        self.Es = np.zeros(len(VG))
+        self.Eox = np.zeros(len(VG))
+        self.Cg = np.zeros(len(VG))
+        self.Cq = np.zeros(len(VG))
+
+        for j in range(xg_length):
+            VG_units = Value(VG[j], ureg.volts)
+            VBG = VG_units
+            B = ((VG_units - self.VFBT) / (self.lambdaT ** 2)) + ((VBG - self.VFBB) / (self.lambdaB ** 2))
+            i = 1
+            self.phi[i] = VG_units
+            self.p = Value(self.phi[i], ureg.volts)
+
+            self.f[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta - math.exp(
+                  (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
+
+
+            self.fd[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (1 + math.exp((self.p- VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta * (((self.beta * math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) / (self.vth * (1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)))) + ((self.alpha * math.exp((self.p - VS) / self.vth)) / (self.vth * (1 + math.exp((self.p - VS) / self.vth))))) + ((self.A ** 2) * (self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp((self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
+
+            iter = 0
+            while (abs(self.f[i]) > 1e-06) : #termination condition
+                iter = iter + 1
+                self.phi[i + 1] = (self.phi[i] - (self.f[i]) / (self.fd[i]))
+                self.p_1 = Value(self.phi[i + 1], ureg.volts)
+                self.f[i + 1] = (1 + math.exp((self.p_1 - VS) / self.vth)) ** self.alpha * (
+                            1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta - math.exp(
+                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p_1) + (self.Nimp / self.NDOS))
+
+                self.fd[i + 1] = (1 + math.exp((self.p_1 - VS) / self.vth)) ** self.alpha * (
+                            1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta * (((self.beta * math.exp(
+                    (self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)) / (self.vth * (
+                            1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)))) + ((self.alpha * math.exp(
+                    (self.p_1 - VS) / self.vth)) / (self.vth * (1 + math.exp((self.p_1 - VS) / self.vth))))) + (
+                                        (self.A ** 2) * (self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp(
+                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p_1) + (self.Nimp / self.NDOS))
+                i = i + 1
+
+            self.phis[j] = self.phi[i]
+            self.ph = Value(self.phis[j], ureg.volts)
+            #Charge density in the 2D layer(m ^ -2)
+            self.n2d[j] = (self.epsilon_channel * self.d / self.q) * (B - (self.A ** 2) * self.ph) + self.Nimp
+            #Electic field at the surface (V/m)
+            self.Es[j] = self.q * self.n2d[j] / self.epsilon_channel
+            #Electric field in the oxide
+            self.Eox[j] = (self.epsilon_ox / self.epsilon_channel) * ((VG[j] - self.VFBT - self.phis[j]) / self.EOT)
+
+        self.n2d = np.trim_zeros(self.n2d, 'b')
+        self.phis = np.trim_zeros(self.phis, 'b')
+        
+        #Capacitance Calculation
+        Cg = np.divide (np.diff(self.q * self.n2d * 1e-4), np.diff(VG))
+        CQ = np.divide (np.diff(self.q * self.n2d * 1e-4), np.diff(self.phis))
+
+        #Plot Channel Voltage vs Vgs
+        # plt.plot(VG, self.phis)
+        # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        # plt.ylabel('$V_C$$_H$ ', fontsize=16)
+        # plt.show()
+        #
+        # #Plot Carrier Concentration vs Vgs
+        # plt.plot(VG, self.n2d)
+        # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        # plt.ylabel('$n_2$$_D$ ', fontsize=16)
+        # plt.show()
+        #
+        # # Log plot Gate Capacitance vs Vgs
+        # plt.semilogy(VG[1:], Cg)
+        # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        # plt.ylabel('$C_g$ ', fontsize=16)
+        # plt.show()
+
+        # Log plot Gate Capacitance vs Vgs
+        # plt.semilogy(VG[1:], CQ)
+        # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        # plt.ylabel('$C_q$ ', fontsize=16)
+        # #plt.show()
+        print("Vgs is ", VG)
+        print("CQ is ", CQ)
+
+    def compute_quantum_cap(self, ambient_temperature, Vgs):
+
+        T = Value(ambient_temperature, ureg.kelvin)
+        # Material Parameters
+        self.g = 2  # Spin Degenracy
+        self.gv1 = 1  # Degenracy of first valley
+        self.gv2 = 1  # Degeneracy of second valley
+        self.me1_eff = Value(0.45 * scipy.constants.electron_mass, ureg.kilograms)  # Effective mass of first valley
+        self.me2_eff = Value(0.45 * scipy.constants.electron_mass,
+                             ureg.kilograms)  # Effective mass of second valley
+        self.vth = self.k_J * T / self.q
+        self.delEC = 3 * self.vth  # Energy difference from the first valley(Set high to ignore this valley in charge calculations)
+        self.epsilon_channel = self.FET.channel.relative_permittivity * free_space_permittivity_F_div_cm
+        self.d = self.FET.channel.thickness.base_units()  # channel thickness
+
+        self.epsilon_ox = self.FET.gate_oxide.relative_permittivity * free_space_permittivity_F_div_cm
+        self.EOT = self.FET.gate_oxide.thickness
+        # self.epsilon_ox_b =
+        # self.EOTB =
+        self.cox_t = (self.epsilon_ox / self.EOT).adjust_unit(ureg.coulombs / (ureg.volts * ureg.meter ** 2))
+        self.cox_b = (self.epsilon_ox / self.EOT).adjust_unit(ureg.coulombs / (ureg.volts * ureg.meter ** 2))
+
+        # Calculate electrostatic screening lengths
+        self.lambdaT = (self.epsilon_channel * self.d / self.cox_t) ** (1 / 2)
+        self.lambdaB = (self.epsilon_channel * self.d / self.cox_b) ** (1 / 2)
+        self.A = (self.lambdaT ** (-2) + self.lambdaB ** (-2)) ** (1 / 2)
+
+        # Calculate Effective density of states for each valley
+        self.NDOS1 = (self.gv1 * self.me1_eff * self.k_J * T) / (pi * self.hcross ** 2)
+        self.NDOS2 = (self.gv2 * self.me2_eff * self.k_J * T) / (pi * self.hcross ** 2)
+        self.NDOS = self.NDOS2
+        self.alpha = self.NDOS1 / self.NDOS
+        self.beta = self.NDOS2 / self.NDOS
+        self.Nimp = Value(3.5e11, ureg.meters ** -2)
+
+        VDS = Value(0.0, ureg.volts)
+        VS = Value(0.0, ureg.volts)
+        VD = VS + VDS
+        VG = [Vgs, Vgs + .01]
+        xg_length = len(VG)
+
+        array_size = 10000
+
+        self.phi = np.zeros(array_size)
+        self.f = np.zeros(array_size)
+        self.fd = np.zeros(array_size)
+        self.phis = np.zeros(array_size)
+        self.n2d = np.zeros(len(VG))
+        self.Es = np.zeros(len(VG))
+        self.Eox = np.zeros(len(VG))
+        self.Cg = np.zeros(len(VG))
+        self.Cq = np.zeros(len(VG))
+
+        for j in range(xg_length):
+            VG_units = Value(VG[j], ureg.volts)
+            VBG = VG_units
+            B = ((VG_units - self.VFBT) / (self.lambdaT ** 2)) + ((VBG - self.VFBB) / (self.lambdaB ** 2))
+            i = 1
+            self.phi[i] = VG_units
+            self.p = Value(self.phi[i], ureg.volts)
+
+            self.f[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta - math.exp(
+                (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
+
+            self.fd[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (
+                        1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta * (((self.beta * math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) / (self.vth * (
+                                       1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)))) + ((self.alpha * math.exp((self.p - VS) / self.vth)) / (
+                                   self.vth * (1 + math.exp((self.p - VS) / self.vth))))) + ((self.A ** 2) * (self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp((self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
+
+            iter = 0
+            while (abs(self.f[i]) > 1e-06):  # termination condition
+                iter = iter + 1
+                self.phi[i + 1] = (self.phi[i] - (self.f[i]) / (self.fd[i]))
+                self.p_1 = Value(self.phi[i + 1], ureg.volts)
+                self.f[i + 1] = (1 + math.exp((self.p_1 - VS) / self.vth)) ** self.alpha * (
+                        1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(
+                    -self.delEC / self.vth)) ** self.beta - math.exp(
+                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p_1) + (
+                                self.Nimp / self.NDOS))
+
+                self.fd[i + 1] = (1 + math.exp((self.p_1 - VS) / self.vth)) ** self.alpha * (
+                        1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(
+                    -self.delEC / self.vth)) ** self.beta * (((self.beta * math.exp(
+                    (self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)) / (self.vth * (
+                        1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)))) + (
+                                                                         (self.alpha * math.exp(
+                                                                             (self.p_1 - VS) / self.vth)) / (
+                                                                                     self.vth * (1 + math.exp(
+                                                                                 (self.p_1 - VS) / self.vth))))) + (
+                                         (self.A ** 2) * (
+                                             self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp(
+                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p_1) + (
+                                self.Nimp / self.NDOS))
+                i = i + 1
+
+            self.phis[j] = self.phi[i]
+            self.ph = Value(self.phis[j], ureg.volts)
+            # Charge density in the 2D layer(m ^ -2)
+            self.n2d[j] = (self.epsilon_channel * self.d / self.q) * (B - (self.A ** 2) * self.ph) + self.Nimp
+            # Electic field at the surface (V/m)
+            self.Es[j] = self.q * self.n2d[j] / self.epsilon_channel
+            # Electric field in the oxide
+            self.Eox[j] = (self.epsilon_ox / self.epsilon_channel) * ((VG[j] - self.VFBT - self.phis[j]) / self.EOT)
+
+        self.n2d = np.trim_zeros(self.n2d, 'b')
+        self.phis = np.trim_zeros(self.phis, 'b')
+
+        # Capacitance Calculation
+        Cg = Value( np.diff(self.q * self.n2d * 1e-4) / np.diff(VG)[0],  ureg.coulomb / ureg.meter ** 2 / ureg.volt)
+        CQ = Value( np.diff(self.q * self.n2d * 1e-4) / np.diff(self.phis)[0], ureg.coulomb / ureg.meter ** 2 / ureg.volt )
+
+        print("Vgs is ", VG)
+        print("CQ is ", CQ)
+
+        return CQ
+
+    def compute_quantum_cap_array(self, ambient_temperature, Vgs_array):
+
+        T = Value(ambient_temperature, ureg.kelvin)
+        VDS = Value(0.0, ureg.volts)
+        VS = Value(0.0, ureg.volts)
+        VD = VS + VDS
+        VG = Vgs_array
+        xg_length = len(VG)
+
+        array_size = 10000
+
+        self.phi = np.zeros(array_size)
+        self.f = np.zeros(array_size)
+        self.fd = np.zeros(array_size)
+        self.phis = np.zeros(array_size)
+        self.n2d = np.zeros(len(VG))
+        self.Es = np.zeros(len(VG))
+        self.Eox = np.zeros(len(VG))
+        self.Cg = np.zeros(len(VG))
+        self.Cq = np.zeros(len(VG))
+
+        for j in range(xg_length):
+            VG_units = Value(VG[j], ureg.volts)
+            VBG = VG_units
+            B = ((VG_units - self.VFBT) / (self.lambdaT ** 2)) + ((VBG - self.VFBB) / (self.lambdaB ** 2))
+            i = 1
+            self.phi[i] = VG_units
+            self.p = Value(self.phi[i], ureg.volts)
+
+            self.f[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (
+                        1 + math.exp((self.p - VS) / self.vth) * math.exp(
+                    -self.delEC / self.vth)) ** self.beta - math.exp(
+                (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (
+                            self.Nimp / self.NDOS))
+
+            self.fd[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (
+                        1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta * ((
+                                                                                                                               (
+                                                                                                                                           self.beta * math.exp(
+                                                                                                                                       (
+                                                                                                                                                   self.p - VS) / self.vth) * math.exp(
+                                                                                                                                       -self.delEC / self.vth)) / (
+                                                                                                                                           self.vth * (
+                                                                                                                                               1 + math.exp(
+                                                                                                                                           (
+                                                                                                                                                       self.p - VS) / self.vth) * math.exp(
+                                                                                                                                           -self.delEC / self.vth)))) + (
+                                                                                                                               (
+                                                                                                                                           self.alpha * math.exp(
+                                                                                                                                       (
+                                                                                                                                                   self.p - VS) / self.vth)) / (
+                                                                                                                                           self.vth * (
+                                                                                                                                               1 + math.exp(
+                                                                                                                                           (
+                                                                                                                                                       self.p - VS) / self.vth))))) + (
+                                     (self.A ** 2) * (
+                                         self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp(
+                (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (
+                            self.Nimp / self.NDOS))
+
+            iter = 0
+            while (abs(self.f[i]) > 1e-06):  # termination condition
+                iter = iter + 1
+                self.phi[i + 1] = (self.phi[i] - (self.f[i]) / (self.fd[i]))
+                self.p_1 = Value(self.phi[i + 1], ureg.volts)
+                self.f[i + 1] = (1 + math.exp((self.p_1 - VS) / self.vth)) ** self.alpha * (
+                        1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(
+                    -self.delEC / self.vth)) ** self.beta - math.exp(
+                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p_1) + (
+                                self.Nimp / self.NDOS))
+
+                self.fd[i + 1] = (1 + math.exp((self.p_1 - VS) / self.vth)) ** self.alpha * (
+                        1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(
+                    -self.delEC / self.vth)) ** self.beta * (((self.beta * math.exp(
+                    (self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)) / (self.vth * (
+                        1 + math.exp((self.p_1 - VS) / self.vth) * math.exp(-self.delEC / self.vth)))) + (
+                                                                         (self.alpha * math.exp(
+                                                                             (self.p_1 - VS) / self.vth)) / (
+                                                                                     self.vth * (1 + math.exp(
+                                                                                 (self.p_1 - VS) / self.vth))))) + (
+                                         (self.A ** 2) * (
+                                             self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp(
+                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p_1) + (
+                                self.Nimp / self.NDOS))
+                i = i + 1
+
+            self.phis[j] = self.phi[i]
+            self.ph = Value(self.phis[j], ureg.volts)
+            # Charge density in the 2D layer(m ^ -2)
+            self.n2d[j] = (self.epsilon_channel * self.d / self.q) * (B - (self.A ** 2) * self.ph) + self.Nimp
+            # Electic field at the surface (V/m)
+            self.Es[j] = self.q * self.n2d[j] / self.epsilon_channel
+            # Electric field in the oxide
+            self.Eox[j] = (self.epsilon_ox / self.epsilon_channel) * ((VG[j] - self.VFBT - self.phis[j]) / self.EOT)
+
+        self.n2d = np.trim_zeros(self.n2d, 'b')
+        self.phis = np.trim_zeros(self.phis, 'b')
+
+        # Capacitance Calculation
+        Cg = np.divide(np.diff(self.q * self.n2d * 1e-4), np.diff(VG))
+        CQ = np.divide(np.diff(self.q * self.n2d * 1e-4), np.diff(self.phis))
+
+
+        # Plot Channel Voltage vs Vgs
+        # plt.plot(VG, self.phis)
+        # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        # plt.ylabel('$V_C$$_H$ ', fontsize=16)
+        # plt.show()
+        #
+        # #Plot Carrier Concentration vs Vgs
+        # plt.plot(VG, self.n2d)
+        # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        # plt.ylabel('$n_2$$_D$ ', fontsize=16)
+        # plt.show()
+        #
+        # # Log plot Gate Capacitance vs Vgs
+        # plt.semilogy(VG[1:], Cg)
+        # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        # plt.ylabel('$C_g$ ', fontsize=16)
+        # plt.show()
+
+        #Log plot Quantum Capacitance vs Vgs
+        plt.semilogy(VG[1:], CQ)
+        plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
+        plt.ylabel('$C_q$ ', fontsize=16)
+        plt.show()
+        print("Vgs is ", VG)
+        print("CQ is ", CQ)
+
+
+    def compute_diffusion_current(self, ambient_temp, vgs, vd):
+        #Capacitance Values
+        self.c_Q = self.compute_quantum_cap(ambient_temp, vgs)
+        self.c_i = self.cox_t
+        self.c_it = self.q * Value(1e15, ureg.meter ** -2 / ureg.volt)
+        self.cap_r = 1 + (self.c_Q + self.c_it) / self.c_i
+
+        #Mobility
+        mobility_temp = Value(295, ureg.kelvin)
+        T = Value(ambient_temp, ureg.kelvin)
+        mobility = self.compute_mobility_temperature(self.FET.max_mobility, mobility_temp, T).adjust_unit(ureg.meter ** 2 / ureg.second / ureg.volt)
+
+        #Compute Diffusion Current
+        self.i_diff = (mobility * (self.c_Q + self.c_it) * (self.FET.width / self.FET.length) * (self.vth ** 2) * (1-math.exp(-vd/self.vth)) * math.exp((vgs-self.FET.Vt_avg)/(self.vth * self.cap_r))).adjust_unit(ureg.ampere)
+        print("Diffusion Current is ", self.i_diff)
+
+        return self.i_diff
+
+    def plot_diffusion_current(self, ambient_temp, vgs_array, vd_array):
+        idiff_vgs_dict = {"vgs": vgs_array}
+        length = len(vgs_array)
+
+        for d in vd_array:
+            i_diff = []
+            cq = []
+            for i in range(length):
+                i_diff.append(self.compute_diffusion_current(ambient_temp, vgs_array[i], d))
+                cq.append(self.Cq)
+            idiff_vgs_dict["vds = " + str(d)] = np.array(i_diff)
+            idiff_vgs_dict["cq = " + str(d)] = np.array(cq)
+
+        plt.plot(vgs_array, idiff_vgs_dict["vds = " + str(vd_array[1])])
+        plt.yscale('log')
+        plt.show()
+
+        plt.plot(vgs_array, idiff_vgs_dict["cq = " + str(vd_array[1])])
+        plt.yscale('log')
+        plt.show()
+
+
+        #def model_output(self, Vds, Vgs, ambient_temperature=None):
     def model_output(self, Vds, Vgs, heating=True, vsat=True, ambient_temperature=None, iterations=2, linestyle='-'):
         mobility_temp = Value(295, ureg.kelvin)
         if ambient_temperature is None:
@@ -203,6 +633,7 @@ class Stanford2DSModel(BaseModel):
                                                                          mobility_temp,
                                                                          temperature)
                 # now compute the mobility at this field
+
                 if vsat:
                     effective_mobility, vsat = self.compute_mobility_velocity_saturation(effective_mobility, vds, temperature)
                     idvd_data['vsat_{0}'.format(vgs)].append(vsat)
@@ -261,3 +692,5 @@ class Stanford2DSModel(BaseModel):
                                name='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), text='')
 
         # temp_plot.save_plot(name='Temp_plot_at_{0}'.format(ambient_temperature))
+
+
