@@ -1,0 +1,1 @@
+from SemiPy.Devices.Interfaces.TwoDMaterialInterfaces.TMD import MoS2SiO2

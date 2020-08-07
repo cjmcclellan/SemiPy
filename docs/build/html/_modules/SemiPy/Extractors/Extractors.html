@@ -1,0 +1,395 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SemiPy.Extractors.Extractors &mdash; SemiPy 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SemiPy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">1. Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">2. Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_doc.html">4. API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../publications.html">5. Scientific Publications</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SemiPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>SemiPy.Extractors.Extractors</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for SemiPy.Extractors.Extractors</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Extractor objects for processing data</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">physics.value</span> <span class="kn">import</span> <span class="n">Value</span>
+
+
+<div class="viewcode-block" id="Extractor"><a class="viewcode-back" href="../../../SemiPy.Extractors.html#SemiPy.Extractors.Extractors.Extractor">[docs]</a><span class="k">class</span> <span class="nc">Extractor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Base class for data extractors</span>
+<span class="sd">        Args:</span>
+<span class="sd">            data_path (str): Path to the datafile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_clean_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ndarry</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove all nan and inf from an ndarray by replacing with 0.0</span>
+<span class="sd">        Args:</span>
+<span class="sd">            ndarry (np.ndarray): The ndarray to be cleaned</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The cleaned ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ndarry</span><span class="p">[</span><span class="n">ndarry</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">ndarry</span><span class="p">[</span><span class="n">ndarry</span> <span class="o">==</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">ndarry</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ndarry</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ndarry</span>
+
+    <span class="k">def</span> <span class="nf">_slope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">keep_dims</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the slope at all data points</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x_data (np.array): The x data of size n</span>
+<span class="sd">            y_data (np.array): The y data of size n</span>
+<span class="sd">            keep_dims (bool): If true, result will have size n</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ndarray: The slope at all points (size n - 1 or n if keep_dims is True)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">slope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">y_data</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">keep_dims</span><span class="p">:</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">slope</span><span class="p">,</span> <span class="n">slope</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:]),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_data</span><span class="p">(</span><span class="n">slope</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_plot_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="n">x_data</span> <span class="o">=</span> <span class="n">Value</span><span class="o">.</span><span class="n">array_like</span><span class="p">(</span><span class="n">array</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">x_min</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">x_data</span><span class="o">*</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_linear_extraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y_inter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_inter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a line from a x and y point and either the slope, y intercept, or x intercept</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x (float): The x data point</span>
+<span class="sd">            y (float): The y data point</span>
+<span class="sd">            slope (float): The slope</span>
+<span class="sd">            y_inter (float): The y intercept value</span>
+<span class="sd">            x_inter (float): The x intercept value</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (a, b, x_inter): The a and b in y = ax + b and the x intercept</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">slope</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">x</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">slope</span>
+            <span class="n">x_inter</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">b</span><span class="o">/</span><span class="n">a</span>
+        <span class="k">elif</span> <span class="n">y_inter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">y_inter</span><span class="p">)</span><span class="o">/</span><span class="n">x</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">y_inter</span>
+            <span class="n">x_inter</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">b</span><span class="o">/</span><span class="n">a</span>
+        <span class="k">elif</span> <span class="n">x_inter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_inter</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="n">x</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You did not give a slope, y_inter, or x_inter.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">x_inter</span>
+
+<div class="viewcode-block" id="Extractor.extract_data"><a class="viewcode-back" href="../../../SemiPy.Extractors.html#SemiPy.Extractors.Extractors.Extractor.extract_data">[docs]</a>    <span class="k">def</span> <span class="nf">extract_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;You must implement the extract_data function for the Extractor&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Extractor.linear_regression"><a class="viewcode-back" href="../../../SemiPy.Extractors.html#SemiPy.Extractors.Extractors.Extractor.linear_regression">[docs]</a>    <span class="k">def</span> <span class="nf">linear_regression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simple function for linear regression to a dataset.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x_data (np.ndarray): A 1 or 2D ndarray with the x data.  See y_data for 2D array details.</span>
+<span class="sd">            y_data (np.ndarray): A 1 or 2D ndarray with the y data.  If 2D, then the first dimension will serve as the</span>
+<span class="sd">             dataset and second dim as each individual dataset</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            slope, slope error, x-intercept, x-intercept error</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">i_len</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="c1"># using x and y values as means, create normal distributions using the provided std&#39;s</span>
+        <span class="c1"># x_normal = np.array([np.random.normal(mean, std * 0, 1) for std, mean in zip(self.x_std, self.x)]).flatten()</span>
+        <span class="c1"># y_normal = np.array([np.random.normal(mean, std * 0, 1) for std, mean in zip(self.y_std, self.y)]).flatten()</span>
+
+        <span class="c1"># if x_data and y_data are 2D arrays, then loop over the second dim, using the first dim as the dataset</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">a_error</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">b_error</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">a_t</span><span class="p">,</span> <span class="n">a_e_t</span><span class="p">,</span> <span class="n">b_t</span><span class="p">,</span> <span class="n">b_e_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__compute_linear_regression</span><span class="p">(</span><span class="n">x_data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a_t</span><span class="p">)</span>
+                <span class="n">a_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a_e_t</span><span class="p">)</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b_t</span><span class="p">)</span>
+                <span class="n">b_error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b_e_t</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">a_error</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">b_error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__compute_linear_regression</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Your x_data and y_data dimensions are off.  x_data is </span><span class="si">{0}</span><span class="s1"> and y_data </span><span class="si">{1}</span><span class="s1">, but they&#39;</span>
+                             <span class="s1">&#39; must have the same shape and either have 1 or 2 dimensions&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">a</span><span class="p">,</span> <span class="n">a_error</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">b_error</span></div>
+        <span class="c1"># for i in range(i_len):</span>
+        <span class="c1">#     x_normal = np.array([np.random.normal(mean, std, 1) for std, mean in zip(self.x_std, self.x)]).flatten()</span>
+        <span class="c1">#     y_normal = np.array([np.random.normal(mean, std, 1) for std, mean in zip(self.y_std, self.y)]).flatten()</span>
+        <span class="c1">#</span>
+        <span class="c1">#     # fit the data using np.polyfit with 1</span>
+        <span class="c1">#     p, V = np.polyfit(x_normal, y_normal, 1, cov=True)</span>
+        <span class="c1">#     # self.a_avg += p[0]</span>
+        <span class="c1">#     # self.b_avg += p[1]</span>
+        <span class="c1">#     self.a_error_avg += slope_holder.unit_copy(np.sqrt(V[0][0]))</span>
+        <span class="c1">#     self.b_error_avg += self.y[0].unit_copy(np.sqrt(V[1][1]))</span>
+        <span class="c1"># # compute the averages</span>
+        <span class="c1"># # self.a_avg /= i_len + 1</span>
+        <span class="c1"># self.a_error_avg = (self.a_error_avg / (i_len + 1))</span>
+        <span class="c1"># # self.b_avg /= i_len + 1</span>
+        <span class="c1"># self.b_error_avg = (self.b_error_avg / (i_len + 1))</span>
+
+        <span class="c1"># return self.a_avg, self.a_error_avg, self.b_avg, self.b_error_avg</span>
+
+    <span class="k">def</span> <span class="nf">__compute_linear_regression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">x_data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">y_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s1">&#39;The x_data and y_data must have the same shape, but they&#39;</span> \
+                                             <span class="s1">&#39; are </span><span class="si">{0}</span><span class="s1"> and </span><span class="si">{1}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">y_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">x_normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">y_normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">slope_holder</span> <span class="o">=</span> <span class="n">x_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">y_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># fit the data using np.polyfit with 1 for more than two points</span>
+        <span class="k">if</span> <span class="n">x_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x_normal</span><span class="p">,</span> <span class="n">y_normal</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">a_avg</span> <span class="o">=</span> <span class="n">slope_holder</span><span class="o">.</span><span class="n">unit_copy</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">b_avg</span> <span class="o">=</span> <span class="n">y_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unit_copy</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">a_error_avg</span> <span class="o">=</span> <span class="n">slope_holder</span><span class="o">.</span><span class="n">unit_copy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">b_error_avg</span> <span class="o">=</span> <span class="n">y_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unit_copy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">a_avg</span><span class="p">,</span> <span class="n">a_error_avg</span><span class="p">,</span> <span class="n">b_avg</span><span class="p">,</span> <span class="n">b_error_avg</span></div>
+
+
+<div class="viewcode-block" id="TrendLine"><a class="viewcode-back" href="../../../SemiPy.Extractors.html#SemiPy.Extractors.Extractors.TrendLine">[docs]</a><span class="k">class</span> <span class="nc">TrendLine</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">trend_area</span><span class="p">):</span>
+        <span class="c1"># self.fit, error = np.polyfit(np.log10(x_data), np.log10(y_data), 2, cov=True)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_data</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+        <span class="c1"># self.x_trend = np.logspace(np.log10(x_data.min()), np.log10(x_data.max()), num=100)</span>
+        <span class="c1"># x_log = np.log10(self.x_trend)</span>
+        <span class="c1"># # y_trend = np.exp([fit[0]*x**1 + fit[1]*x**0 for x in x_log])</span>
+        <span class="c1"># self.y_trend = np.power([10 for x in x_log], [self.compute_fit(x) for x in x_log])</span>
+
+        <span class="c1"># now just get the fit within trend_area * y_area</span>
+        <span class="c1"># y_error = 2*trend_area #error[1][1]</span>
+
+        <span class="c1"># x_data_new = []</span>
+        <span class="c1"># y_data_new = []</span>
+        <span class="c1"># for y, x in zip(y_data, x_data):</span>
+        <span class="c1">#     y_fit = np.log10(self.compute_fit(x))</span>
+        <span class="c1">#     if (y_fit - y_error &lt; np.log10(y)) and (y_fit + y_error &gt; np.log10(y)):</span>
+        <span class="c1">#         x_data_new.append(x)</span>
+        <span class="c1">#         y_data_new.append(y)</span>
+        <span class="c1">#</span>
+        <span class="c1"># self.fit_data(np.array(x_data_new), np.array(y_data_new))</span>
+
+        <span class="c1"># y_trend = np.exp([fit[0]*x_log[0]**2 + fit[1]*x_log[0]**1 + fit[2]*x_log[0]**0,</span>
+        <span class="c1">#            fit[0] * x_log[1] ** 2 + fit[1] * x_log[1] ** 1 + fit[2] * x_log[1] ** 0])</span>
+        <span class="c1"># x_inter = -fit[1]/fit[0]</span>
+
+<div class="viewcode-block" id="TrendLine.compute_fit"><a class="viewcode-back" href="../../../SemiPy.Extractors.html#SemiPy.Extractors.Extractors.TrendLine.compute_fit">[docs]</a>    <span class="k">def</span> <span class="nf">compute_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="TrendLine.get_x_y"><a class="viewcode-back" href="../../../SemiPy.Extractors.html#SemiPy.Extractors.Extractors.TrendLine.get_x_y">[docs]</a>    <span class="k">def</span> <span class="nf">get_x_y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_trend</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_trend</span></div>
+
+<div class="viewcode-block" id="TrendLine.fit_data"><a class="viewcode-back" href="../../../SemiPy.Extractors.html#SemiPy.Extractors.Extractors.TrendLine.fit_data">[docs]</a>    <span class="k">def</span> <span class="nf">fit_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">x_data</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">y_data</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_trend</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">x_data</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">x_data</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">num</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+        <span class="c1"># x_log = np.log10(self.x_trend)</span>
+        <span class="c1"># y_trend = np.exp([fit[0]*x**1 + fit[1]*x**0 for x in x_log])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_trend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_trend</span><span class="p">)</span></div></div>
+        <span class="c1"># self.y_trend = np.power([10 for x in self.x_trend], [self.compute_fit(x) for x in self.x_trend])</span>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Connor McClellan
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
