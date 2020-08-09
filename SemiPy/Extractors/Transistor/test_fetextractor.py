@@ -36,19 +36,19 @@ class TestFETExtractors(unittest.TestCase):
         channel = MoS2(layer_number=1)
         substrate = Silicon()
 
-        fet = pTFT(gate_oxide=gate_oxide, channel=channel, width=Value(1, ureg.micrometer), substrate=substrate,
+        fet = nTFT(gate_oxide=gate_oxide, channel=channel, width=Value(1, ureg.micrometer), substrate=substrate,
                    length=Value(1, ureg.micrometer))
 
         # SchotkkyModel(fet, )
 
         result = FETExtractor(FET=fet, idvg_path=idvg_path, idvd_path=idvd_path)
-
+        print(result.FET.Vt_avg)
         self.assert_value_equals(result.FET.Vt_avg, Value(3.78, ureg.volt), 'Vt avg')
         self.assert_value_equals(result.FET.Vt_bwd, Value(4.06, ureg.volt), 'Vt bwd')
         self.assert_value_equals(result.FET.Vt_fwd, Value(3.5, ureg.volt), 'Vt fwd')
         #self.assert_value_equals(result.FET.max_mobility, Value(15.82, ureg.centimeter ** 2 / ureg.second / ureg.volt), 'Max Mobility')
 
-        result.FET.publish_csv('.')
+        #result.FET.publish_csv('.')
 
         # result.save_plots()
 
