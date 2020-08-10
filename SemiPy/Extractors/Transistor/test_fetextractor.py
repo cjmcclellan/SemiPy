@@ -39,10 +39,12 @@ class TestFETExtractors(unittest.TestCase):
         fet = nTFT(gate_oxide=gate_oxide, channel=channel, width=Value(1, ureg.micrometer), substrate=substrate,
                    length=Value(1, ureg.micrometer))
 
-        # SchotkkyModel(fet, )
+        # SchottkyModel(fet, )
 
         result = FETExtractor(FET=fet, idvg_path=idvg_path, idvd_path=idvd_path)
         print(result.FET.Vt_avg)
+        print(result.FET.Vt_fwd)
+        print(result.FET.Vt_bwd)
         self.assert_value_equals(result.FET.Vt_avg, Value(3.78, ureg.volt), 'Vt avg')
         self.assert_value_equals(result.FET.Vt_bwd, Value(4.06, ureg.volt), 'Vt bwd')
         self.assert_value_equals(result.FET.Vt_fwd, Value(3.5, ureg.volt), 'Vt fwd')
@@ -51,6 +53,27 @@ class TestFETExtractors(unittest.TestCase):
         #result.FET.publish_csv('.')
 
         # result.save_plots()
+
+    def test_igzo(self):
+        # This test models an a-IGZO device with 20nm IGZO, 100nm SiO2 on Si substrate.
+
+        # TODO: Change filepaths to point correctly
+        idvd_path = get_abs_semipy_path('SampleData/FETExampleData/WSe2_Sample_4_Id_Vd.txt')
+        idvg_path = get_abs_semipy_path('SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt')
+
+        gate_oxide = SiO2(thickness=Value(100, ureg.nanometer))
+        channel = MoS2(layer_number=1) # TODO: Change this to IGZO
+        substrate = Silicon()
+
+        fet = nTFT(gate_oxide=gate_oxide, channel=channel, width=Value(180, ureg.micrometer), substrate=substrate,
+                   length=Value(30, ureg.micrometer))
+
+        result = FETExtractor(FET=fet, idvg_path=idvg_path, idvd_path=idvd_path)
+        print(result.FET.max_gm)
+        print(result.FET.max_mobility)
+        print(result.FET.Vt_avg)
+        print(result.FET.min_ss)
+        
 
     def assert_value_equals(self, result_value, true_value, value_name):
 

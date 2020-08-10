@@ -79,7 +79,7 @@ class FETExtractor(Extractor):
         # now run the extractions
         self.__extract_data()
 
-    def __extract_data(self):
+    def __extract_data(self): # Added type to indicate n/p/a-type
         """
         Extract the properties of the FET given the available data, including transconductance (gm), subthreshold swing (ss), field-effect
         mobility (mufe), threshold voltage (vt), max on current (max_Ion), min off current at max Ion Vd (min_Ioff),
@@ -179,6 +179,7 @@ class FETExtractor(Extractor):
     def _extract_gm(self, fwd=False, bwd=False, vd=None, return_max=False):
         current, gate = self._sweep_directions(['id', 'vg'], fwd=fwd, bwd=bwd)
 
+        # Calculates instantaneous gm at every point, returns ndarray of slopes
         if vd is None:
             gm = self._slope(x_data=self.idvg.get_column(gate),
                              y_data=self.idvg.get_column(current), keep_dims=True)
@@ -189,10 +190,11 @@ class FETExtractor(Extractor):
         # if return max, then return the max and max_i
         if return_max:
             max_gm, max_gm_i = self.FET.max_slope_value(gm, return_index=True)
-
+            print("gm = ", max_gm)
             # now check if the max gm was reached before the final Vg point.  If so, then there could be error
             vg = self.idvg.get_column('vg')
             max_vg = self.FET.max_slope_value(vg)
+            print("max Vg = ", max_vg)
             if max_vg == vg[max_gm_i]:
                 warnings.warn('The transconductance (gm) has not reached maximum, potentially resulting in error'
                               ' in extracting threshold voltage')
