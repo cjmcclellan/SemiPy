@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ### SemiPy Framework
 
 This is the main repository for the SemiPy data analysis framework.
@@ -20,13 +19,8 @@ requirements.txt file.
 Make sure to have python3 installed and callable on your machine.
 
 Using the Command Line, navigate to the directory you want install SemiPy.
-# Install
 
-=======
-# Install
-
->>>>>>> master
-## Linux
+##### Linux
 make sure to install orca for plotting by running
 
 `sudo apt install orca`
