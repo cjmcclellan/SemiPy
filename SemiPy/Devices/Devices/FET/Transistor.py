@@ -116,12 +116,11 @@ class FET(Transistor):
 
     @staticmethod
     def gt(value1, value2):
-        if value1 > value2: # For n-type
-            return True
-        elif -value1 > value2:
-            return True
-        else:
-            return False
+        return np.logical_or(np.greater(value1, value2), np.less(value1, -value2))
+
+    def overvoltage(self, vg):
+        # Overvoltage is defined as Vg - Vth when transistor is on
+        return abs(vg - self.Vt_avg.value)
 
     def vg_to_n(self, vg):
         # adding extra values to make the units be centimeter ** -2
@@ -134,7 +133,8 @@ class FET(Transistor):
             #     / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
 
         try:
-            n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
+            n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * \
+                self.overvoltage(vg) \
                 / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
 
         except Exception as e:
@@ -249,7 +249,7 @@ class PFET(FET):
 
     def vg_to_n(self, vg):
         # flip the sign of vg
-        super(PFET, self).vg_to_n(abs(vg))
+        return super(PFET, self).vg_to_n(abs(vg))
 
 
 class AmbipolarFET(FET):
