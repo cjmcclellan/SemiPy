@@ -114,11 +114,21 @@ class FET(Transistor):
     def norm_Field(self, vd):
         return vd/self.width    # def max_Ion(self):
 
+    @staticmethod
+    def gt(value1, value2):
+        if value1 > value2: # For n-type
+            return True
+        elif -value1 > value2:
+            return True
+        else:
+            return False
+
     def vg_to_n(self, vg):
         # adding extra values to make the units be centimeter ** -2
         # replace any Vg < Vt_avg with Vt_avg
         if isinstance(vg, np.ndarray):
-            vg[vg < self.Vt_avg.value] = self.Vt_avg.value
+            vg[self.gt(self.Vt_avg.value, vg)] = self.Vt_avg.value
+            # vg[vg < self.Vt_avg.value] = self.Vt_avg.value
             # n = carrier_density(self.gate_oxide.capacitance, vg, self.Vt_avg.value)
             # n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
             #     / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
@@ -131,7 +141,7 @@ class FET(Transistor):
             assert self.Vt_avg.value is not None, \
                 'You must calculate the average Vt by running FET.compute_properties() before computing the carrier density'
             raise e
-        return n
+        return n # None
 
     @property
     def min_ss(self):

@@ -4,7 +4,7 @@ Testing for transistor models
 import unittest
 from SemiPy.Extractors.Transistor.FETExtractor import FETExtractor
 from SemiPy.Devices.Materials.TwoDMaterials.TMD import MoS2
-from SemiPy.Devices.Materials.Oxides.MetalOxides import SiO2
+from SemiPy.Devices.Materials.Oxides.MetalOxides import SiO2, aIGZO
 from SemiPy.Devices.Materials.Semiconductors.BulkSemiconductors import Silicon
 from SemiPy.Devices.Devices.FET.ThinFilmFET import nTFT, pTFT, aTFT
 from SemiPy.helper.paths import get_abs_semipy_path
@@ -36,7 +36,7 @@ class TestFETExtractors(unittest.TestCase):
         channel = MoS2(layer_number=1)
         substrate = Silicon()
 
-        fet = nTFT(gate_oxide=gate_oxide, channel=channel, width=Value(1, ureg.micrometer), substrate=substrate,
+        fet = pTFT(gate_oxide=gate_oxide, channel=channel, width=Value(1, ureg.micrometer), substrate=substrate,
                    length=Value(1, ureg.micrometer))
 
         # SchottkyModel(fet, )
@@ -56,16 +56,20 @@ class TestFETExtractors(unittest.TestCase):
 
     def test_igzo(self):
         # This test models an a-IGZO device with 20nm IGZO, 100nm SiO2 on Si substrate.
+        # Documentation notes:
+            # 1. Add material and copy material properties
+            # 2. Set model in unittest
+            # 3. Files
 
         # TODO: Change filepaths to point correctly
         idvd_path = get_abs_semipy_path('SampleData/FETExampleData/WSe2_Sample_4_Id_Vd.txt')
         idvg_path = get_abs_semipy_path('SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt')
 
         gate_oxide = SiO2(thickness=Value(100, ureg.nanometer))
-        channel = MoS2(layer_number=1) # TODO: Change this to IGZO
+        channel = aIGZO(thickness=Value(20, ureg.nanometer))
         substrate = Silicon()
 
-        fet = nTFT(gate_oxide=gate_oxide, channel=channel, width=Value(180, ureg.micrometer), substrate=substrate,
+        fet = pTFT(gate_oxide=gate_oxide, channel=channel, width=Value(180, ureg.micrometer), substrate=substrate,
                    length=Value(30, ureg.micrometer))
 
         result = FETExtractor(FET=fet, idvg_path=idvg_path, idvd_path=idvd_path)
