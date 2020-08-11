@@ -119,7 +119,7 @@ class FET(Transistor):
         return np.logical_or(np.greater(value1, value2), np.less(value1, -value2))
 
     def overvoltage(self, vg):
-        # Overvoltage is defined as Vg - Vth when transistor is on
+        # Overvoltage is defined as Vg-Vt when transistor is on
         return abs(vg - self.Vt_avg.value)
 
     def vg_to_n(self, vg):

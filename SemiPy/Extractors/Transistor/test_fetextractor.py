@@ -45,10 +45,18 @@ class TestFETExtractors(unittest.TestCase):
         print(result.FET.Vt_avg)
         print(result.FET.Vt_fwd)
         print(result.FET.Vt_bwd)
-        self.assert_value_equals(result.FET.Vt_avg, Value(3.78, ureg.volt), 'Vt avg')
-        self.assert_value_equals(result.FET.Vt_bwd, Value(4.06, ureg.volt), 'Vt bwd')
-        self.assert_value_equals(result.FET.Vt_fwd, Value(3.5, ureg.volt), 'Vt fwd')
+        # self.assert_value_equals(result.FET.Vt_avg, Value(3.78, ureg.volt), 'Vt avg')
+        # self.assert_value_equals(result.FET.Vt_bwd, Value(4.06, ureg.volt), 'Vt bwd')
+        # self.assert_value_equals(result.FET.Vt_fwd, Value(3.5, ureg.volt), 'Vt fwd')
         #self.assert_value_equals(result.FET.max_mobility, Value(15.82, ureg.centimeter ** 2 / ureg.second / ureg.volt), 'Max Mobility')
+
+        # pFET data
+        self.assert_value_equals(result.FET.Vt_avg, Value(-15.88, ureg.volt), 'Vt avg')
+        self.assert_value_equals(result.FET.Vt_bwd, Value(-14.96, ureg.volt), 'Vt bwd')
+        self.assert_value_equals(result.FET.Vt_fwd, Value(-16.81, ureg.volt), 'Vt fwd')
+        self.assert_value_equals(result.FET.max_gm, Value(-0.8, ureg.microsiemens / ureg.micrometer), 'Max Gm')
+        self.assert_value_equals(result.FET.min_ss, Value(482.5, ureg.meter * ureg.millivolt / ureg.ampere), 'min SS')
+        # self.assert_value_equals(result.FET.max_mobility, Value(15.82, ureg.centimeter ** 2 / ureg.second / ureg.volt), 'Max Mobility')
 
         #result.FET.publish_csv('.')
 
