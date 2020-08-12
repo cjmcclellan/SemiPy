@@ -168,13 +168,13 @@ class Stanford2DSModel(BaseModel):
 
         return average_temperature
 
-    def compute_quantum_cap(self, ambient_temperature, Vgs):
+    def compute_quantum_cap_2(self, ambient_temperature, Vgs):
 
         T = Value(ambient_temperature, ureg.kelvin)
         # Material Parameters
         self.g = 2  # Spin Degenracy
-        self.gv1 = 1;  # Degenracy of first valley
-        self.gv2 = 1;  # Degeneracy of second valley
+        self.gv1 = 1  # Degenracy of first valley
+        self.gv2 = 1  # Degeneracy of second valley
         self.me1_eff = Value(0.45 * scipy.constants.electron_mass, ureg.kilograms)  # Effective mass of first valley
         self.me2_eff = Value(0.45 * scipy.constants.electron_mass, ureg.kilograms)   # Effective mass of second valley
         self.vth = self.k_J * T / self.q
@@ -208,6 +208,8 @@ class Stanford2DSModel(BaseModel):
         VDS = Value(0.0, ureg.volts)
         VS = Value(0.0, ureg.volts)
         VD = VS + VDS
+        # adjust the Vgs by the threshold voltage
+        Vgs = Vgs - self.FET.Vt_avg
         VG = [Vgs, Vgs+.01]
         xg_length = len(VG)
 
@@ -266,7 +268,7 @@ class Stanford2DSModel(BaseModel):
 
         self.n2d = np.trim_zeros(self.n2d, 'b')
         self.phis = np.trim_zeros(self.phis, 'b')
-        
+
         #Capacitance Calculation
         Cg = np.divide (np.diff(self.q * self.n2d * 1e-4), np.diff(VG))
         CQ = np.divide (np.diff(self.q * self.n2d * 1e-4), np.diff(self.phis))
@@ -294,8 +296,8 @@ class Stanford2DSModel(BaseModel):
         # plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
         # plt.ylabel('$C_q$ ', fontsize=16)
         # #plt.show()
-        print("Vgs is ", VG)
-        print("CQ is ", CQ)
+        #print("Vgs is ", VG)
+        #print("CQ is ", CQ)
 
     def compute_quantum_cap(self, ambient_temperature, Vgs):
 
@@ -408,7 +410,7 @@ class Stanford2DSModel(BaseModel):
         Cg = Value( np.diff(self.q * self.n2d * 1e-4) / np.diff(VG)[0],  ureg.coulomb / ureg.meter ** 2 / ureg.volt)
         CQ = Value( np.diff(self.q * self.n2d * 1e-4) / np.diff(self.phis)[0], ureg.coulomb / ureg.meter ** 2 / ureg.volt )
 
-        print("Vgs is ", VG)
+        #print("Vgs is ", VG)
         print("CQ is ", CQ)
 
         return CQ
@@ -539,15 +541,17 @@ class Stanford2DSModel(BaseModel):
         plt.xlabel('$V_G$$_S$ (V)', fontsize=16)
         plt.ylabel('$C_q$ ', fontsize=16)
         plt.show()
-        print("Vgs is ", VG)
-        print("CQ is ", CQ)
+        # print("Vgs is ", VG)
+        # print("CQ is ", CQ)
 
 
     def compute_diffusion_current(self, ambient_temp, vgs, vd):
         #Capacitance Values
         self.c_Q = self.compute_quantum_cap(ambient_temp, vgs)
+        # self.c_Q = Value(0, ureg.meter ** -2 * ureg.coulomb / ureg.volt)
         self.c_i = self.cox_t
-        self.c_it = self.q * Value(1e15, ureg.meter ** -2 / ureg.volt)
+        # self.c_it = self.q * Value(1e15, ureg.meter ** -2 / ureg.volt)
+        self.c_it = Value(0, ureg.meter ** -2 * ureg.coulomb / ureg.volt)
         self.cap_r = 1 + (self.c_Q + self.c_it) / self.c_i
 
         #Mobility
@@ -556,10 +560,16 @@ class Stanford2DSModel(BaseModel):
         mobility = self.compute_mobility_temperature(self.FET.max_mobility, mobility_temp, T).adjust_unit(ureg.meter ** 2 / ureg.second / ureg.volt)
 
         #Compute Diffusion Current
-        self.i_diff = (mobility * (self.c_Q + self.c_it) * (self.FET.width / self.FET.length) * (self.vth ** 2) * (1-math.exp(-vd/self.vth)) * math.exp((vgs-self.FET.Vt_avg)/(self.vth * self.cap_r))).adjust_unit(ureg.ampere)
-        print("Diffusion Current is ", self.i_diff)
+        # i_diff = (mobility * (self.c_Q + self.c_it) * (self.FET.width / self.FET.length) * (self.vth ** 2) * (1-math.exp(-vd/self.vth)) * math.exp((vgs-self.FET.Vt_avg)/(self.vth * self.cap_r))).adjust_unit(ureg.ampere)
 
-        return self.i_diff
+        I_diff_term_1 = math.log(math.exp((vgs - self.FET.Vt_avg)/(self.vth * self.cap_r)) + 1)
+        I_diff_term_2 = math.log(math.exp((vgs - self.FET.Vt_avg - vd) / (self.vth * self.cap_r)) + 1)
+
+        i_diff = (self.vth * electron_charge_C * mobility * (self.NDOS / self.FET.length) * (I_diff_term_1 - I_diff_term_2)).base_units()
+
+        print("Diffusion Current is {0} at Vg = {1}".format(i_diff, vgs))
+
+        return i_diff
 
     def plot_diffusion_current(self, ambient_temp, vgs_array, vd_array):
         idiff_vgs_dict = {"vgs": vgs_array}
@@ -574,13 +584,13 @@ class Stanford2DSModel(BaseModel):
             idiff_vgs_dict["vds = " + str(d)] = np.array(i_diff)
             idiff_vgs_dict["cq = " + str(d)] = np.array(cq)
 
-        plt.plot(vgs_array, idiff_vgs_dict["vds = " + str(vd_array[1])])
+        plt.plot(vgs_array, idiff_vgs_dict["vds = " + str(vd_array[0])])
         plt.yscale('log')
         plt.show()
 
-        plt.plot(vgs_array, idiff_vgs_dict["cq = " + str(vd_array[1])])
-        plt.yscale('log')
-        plt.show()
+        # plt.plot(vgs_array, idiff_vgs_dict["cq = " + str(vd_array[1])])
+        # plt.yscale('log')
+        # plt.show()
 
 
         #def model_output(self, Vds, Vgs, ambient_temperature=None):
@@ -588,7 +598,7 @@ class Stanford2DSModel(BaseModel):
         mobility_temp = Value(295, ureg.kelvin)
         if ambient_temperature is None:
             ambient_temperature = Value(295, ureg.kelvin)
-        colors = ['C0', 'C2', 'C3']
+        # colors = ['C0', 'C2', 'C3']
         assert isinstance(Vds, ModelInput)
         assert isinstance(Vgs, ModelInput)
 
@@ -597,10 +607,10 @@ class Stanford2DSModel(BaseModel):
         # if Vds.range[0] == 0.0:
         #     Vds.range[0] = Vds.range[1]
         # make sure the Vgs is above threshold
-        assert Vgs.range[0] > self.FET.Vt_avg, 'The Vgs values should be above the average threshold voltage {0},' \
-                                               ' your min is {1}'.format(self.FET.Vt_avg, Vgs.range[0])
-        assert Vds.range[0] / self.FET.length <= Value(0.25, ureg.volt / ureg.micrometer),\
-            'Your starting field should be less than 0.25 V /um, yours is {0}'.format(Vds.range[0] / self.FET.length)
+        # assert Vgs.range[0] > self.FET.Vt_avg, 'The Vgs values should be above the average threshold voltage {0},' \
+        #                                        ' your min is {1}'.format(self.FET.Vt_avg, Vgs.range[0])
+        # assert Vds.range[0] / self.FET.length <= Value(0.25, ureg.volt / ureg.micrometer),\
+        #     'Your starting field should be less than 0.25 V /um, yours is {0}'.format(Vds.range[0] / self.FET.length)
 
         # create a holder for the data
         idvd_data = {}
@@ -643,17 +653,7 @@ class Stanford2DSModel(BaseModel):
 
                 idvd_data['Id_{0}'.format(vgs)].append(prev_Id / self.FET.width)
                 idvd_data['T_{0}'.format(vgs)].append(temperature)
-        I_units = '\u03BCA/\u03BCm'
-        plt.rc('xtick', labelsize=12)  # fontsize of the tick labels
-        plt.rc('ytick', labelsize=12)
-        for i_vg, vgs in enumerate(Vgs.range):
-            plt.plot(idvd_data['Vds'], [i * 1e6 for i in idvd_data['Id_{0}'.format(vgs)]], colors[i_vg] + linestyle,
-                     label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), linewidth=4)
-        plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
-        plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
-        plt.ylabel('$I_D$ ({0})'.format(I_units), fontsize=16)
-        # plt.legend()
-        # plt.show()
+
 
         # for vgs in Vgs.range:
         #     plt.scatter(idvd_data['Vds'], idvd_data['T_{0}'.format(vgs)],
@@ -677,20 +677,20 @@ class Stanford2DSModel(BaseModel):
         # plt.savefig('vsat_plot_at_{0}'.format(ambient_temperature))
         # plt.show()
 
-        idvd_plot = BasicPlot(x_label='VDS (V)', y_label='ID ({0})'.format(I_units), marker_size=8.0)
-
-        for vgs in Vgs.range:
-            idvd_plot.add_data(x_data=idvd_data['Vds'], y_data=[i * 1e6 for i in idvd_data['Id_{0}'.format(vgs)]],
-                               mode='markers', name='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), text='')
-
-        # idvd_plot.save_plot(name='IdVd_plot_at_{0}'.format(ambient_temperature))
-
-        temp_plot = BasicPlot(x_label='VDS (V)', y_label='Temperature (K)', marker_size=8.0)
-
-        for vgs in Vgs.range:
-            temp_plot.add_data(x_data=idvd_data['Vds'], y_data=idvd_data['T_{0}'.format(vgs)], mode='markers',
-                               name='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), text='')
+        # idvd_plot = BasicPlot(x_label='VDS (V)', y_label='ID ({0})'.format(I_units), marker_size=8.0)
+        #
+        # for vgs in Vgs.range:
+        #     idvd_plot.add_data(x_data=idvd_data['Vds'], y_data=[i * 1e6 for i in idvd_data['Id_{0}'.format(vgs)]],
+        #                        mode='markers', name='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), text='')
+        #
+        # # idvd_plot.save_plot(name='IdVd_plot_at_{0}'.format(ambient_temperature))
+        #
+        # temp_plot = BasicPlot(x_label='VDS (V)', y_label='Temperature (K)', marker_size=8.0)
+        #
+        # for vgs in Vgs.range:
+        #     temp_plot.add_data(x_data=idvd_data['Vds'], y_data=idvd_data['T_{0}'.format(vgs)], mode='markers',
+        #                        name='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), text='')
 
         # temp_plot.save_plot(name='Temp_plot_at_{0}'.format(ambient_temperature))
-
+        return idvd_data
 
