@@ -127,9 +127,11 @@ class FETExtractor(Extractor):
         # compute the ss
         ss = self._slope(y_data=self.idvg.get_column('vg'),
                          x_data=np.log10(self.idvg.get_column('id')),
-                         keep_dims=True)
+                         keep_dims=True, remove_zeroes=True)
         self.idvg.add_column(column_name='ss', column_data=ss)
-        self.FET.min_ss = ss
+        # Issue here is that ss is ndarray
+        self.FET.min_ss = self.FET.min_value(self.idvg.get_column(column_name='ss'), return_index=False)
+        # Bug
 
         # print('computing properties')
 

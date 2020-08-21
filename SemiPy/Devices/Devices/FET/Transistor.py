@@ -72,7 +72,7 @@ class FET(Transistor):
         self._add_publish_property('max_gm')
         # self._max_gm_Vd = None
         self._min_ss = SubthresholdSwing(name='minimum subthreshold swing')
-        # self._add_publish_property('_min_ss')
+        self._add_publish_property('min_ss')
         self.Vt_bwd = Voltage(name='Backward Sweep Threshold Voltage')
         self.Vt_fwd = Voltage(name='Forward Sweep Threshold Voltage')
         self.Vt_avg = Voltage(name='Average Threshold Voltage')
@@ -149,14 +149,14 @@ class FET(Transistor):
 
     @min_ss.setter
     def min_ss(self, _in):
-        if isinstance(_in, np.ndarray):
-            # remove any zeros
-            _in = _in.flatten()
-            zero_val = Value(0.0, _in[0].unit)
-            zero_i = [i for i in range(len(_in)) if _in[i] == zero_val]
-            _in = np.delete(_in, zero_i)
-            _in = self.min_slope_value(_in)
-        _in = _in.adjust_unit(ureg.meter * ureg.millivolt / ureg.amp)
+        # if isinstance(_in, np.ndarray):
+        #     # remove any zeros
+        #     _in = _in.flatten()
+        #     zero_val = Value(0.0, _in[0].unit)
+        #     zero_i = [i for i in range(len(_in)) if _in[i] == zero_val]
+        #     _in = np.delete(_in, zero_i)
+        #     _in = self.min_slope_value(_in)
+        _in = _in.adjust_unit(ureg.micrometer * ureg.millivolt / ureg.ampere)
         self._min_ss = _in
 
     def max_value(self, array, return_index=False):
@@ -196,7 +196,9 @@ class NFET(FET):
         return result
 
     def min_value(self, array, return_index=False):
-        result = abs(array).min()
+        # remove all negative vlues because this is an NFET
+        array = array[array > 0.0]
+        result = array.min()
         if return_index:
             return result, self._arg_min(abs(array))
         return result
