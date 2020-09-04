@@ -4,7 +4,7 @@ Extractor for extracting information of Field-Effect Transistors from IdVg and I
 """
 from SemiPy.Extractors.Extractors import Extractor
 from SemiPy.Datasets.IVDataset import IdVgDataSet, IdVdDataSet
-from SemiPy.Devices.Devices.FET.Transistor import NFET, PFET
+from SemiPy.Devices.Devices.FET.Transistor import NFET, PFET,  AmbipolarFET
 from physics.value import Value, ureg
 import warnings
 import numpy as np
@@ -77,9 +77,13 @@ class FETExtractor(Extractor):
             self.idvd.adjust_column('id', func=adjust_current)
 
         # now run the extractions
-        self.__extract_data()
+        if isinstance(self.FET, AmbipolarFET):
+            self.__extract_data(self.FET.NBranch)
+            self.__extract_data(self.FET.PBranch)
+        else:
+            self.__extract_data(self.FET)
 
-    def __extract_data(self): # Added type to indicate n/p/a-type
+    def __extract_data(self, FET_instance): # Added type to indicate n/p/a-type
         """
         Extract the properties of the FET given the available data, including transconductance (gm), subthreshold swing (ss), field-effect
         mobility (mufe), threshold voltage (vt), max on current (max_Ion), min off current at max Ion Vd (min_Ioff),
@@ -87,6 +91,13 @@ class FETExtractor(Extractor):
             None
         """
         print('starting extraction')
+
+        # check the type of FET inserted
+        if isinstance(FET_instance, NFET):
+            type = "_n"
+        elif isinstance(FET_instance, PFET):
+            type = "_p"
+
         # now compute the vt and gm using the max Vd
         vd = self.idvg.get_secondary_indep_values()
         # adjust the shape to be [num_set, 1]
@@ -94,61 +105,53 @@ class FETExtractor(Extractor):
         max_vd = max(vd)
 
         vg = self.idvg.get_column('vg')
-        max_vg = self.FET.max_value(vg)
+        max_vg = FET_instance.max_value(vg)
 
         # get the max and min Ion
         ion = self.idvg.get_column('id')
-        max_ion, max_ion_i = self.FET.max_value(ion, return_index=True)
+        max_ion, max_ion_i = FET_instance.max_value(ion, return_index=True)
         max_ion_vd = vd[max_ion_i[0], 0]
         max_ion_vg = vg[max_ion_i]
-        self.FET.max_Ion.set(value=max_ion, input_values={'Vg': max_ion_vg, 'Vd': max_ion_vd})
+        FET_instance.max_Ion.set(value=max_ion, input_values={'Vg': max_ion_vg, 'Vd': max_ion_vd})
 
         # compute the gm
-        gm_fwd, max_gm_fwd, max_gm_fwd_i = self._extract_gm(fwd=True, return_max=True)
-        gm_bwd, max_gm_bwd, max_gm_bwd_i = self._extract_gm(bwd=True, return_max=True)
+        gm_fwd, max_gm_fwd, max_gm_fwd_i = self._extract_gm(FET_instance, fwd=True, return_max=True)
+        gm_bwd, max_gm_bwd, max_gm_bwd_i = self._extract_gm(FET_instance, bwd=True, return_max=True)
 
         gm = np.concatenate((gm_fwd, gm_bwd), axis=-1)
 
-        self.idvg.add_column(column_name='gm', column_data=gm)
+        self.idvg.add_column(column_name='gm'+type, column_data=gm)
+        max_gm, max_gm_i = FET_instance.max_slope_value(self.idvg.get_column(column_name='gm'+type), return_index=True)
 
-        max_gm, max_gm_i = self.FET.max_slope_value(self.idvg.get_column(column_name='gm'), return_index=True)
         max_gm_vd = vd[max_gm_i[0], 0]
         max_gm_input_values = {'Vg': self.idvg.get_column_set('vg', max_gm_vd)[max_gm_i[-1]], 'Vd': max_gm_vd}
 
-        self.FET.max_gm.set(max_gm, max_gm_input_values)
+        FET_instance.max_gm.set(max_gm, max_gm_input_values)
         # print('set gm')
         # Now extract the Vt values
         vt_fwd = self._extract_vt(index=max_gm_fwd_i, max_gm=max_gm_fwd, fwd=True)
         vt_bwd = self._extract_vt(index=max_gm_bwd_i, max_gm=max_gm_bwd, bwd=True)
 
-        self.FET.Vt_fwd.set(vt_fwd)
-        self.FET.Vt_bwd.set(vt_bwd)
+        FET_instance.Vt_fwd.set(vt_fwd)
+        FET_instance.Vt_bwd.set(vt_bwd)
 
         # compute the ss
         ss = self._slope(y_data=self.idvg.get_column('vg'),
                          x_data=np.log10(self.idvg.get_column('id')),
                          keep_dims=True, remove_zeroes=True)
-        self.idvg.add_column(column_name='ss', column_data=ss)
-        # Issue here is that ss is ndarray
-        self.FET.min_ss = self.FET.min_value(self.idvg.get_column(column_name='ss'), return_index=False)
-        # Bug
+        self.idvg.add_column(column_name='ss'+type, column_data=ss)
+        FET_instance.min_ss = FET_instance.min_value(self.idvg.get_column(column_name='ss'+type), return_index=False)
 
-        # print('computing properties')
-
-        self.FET.compute_properties()
-
-        # print('adjusting n')
+        FET_instance.compute_properties()
 
         # now compute the carrier density
-        n = self.FET.vg_to_n(self.idvg.get_column('vg'))
-        self.idvg.add_column('n', n)
+        n = FET_instance.vg_to_n(self.idvg.get_column('vg'))
+        self.idvg.add_column('n'+type, n)
 
         # print('adding r')
         # now compute the resistance
         r = vd / self.idvg.get_column('id')
-        self.idvg.add_column('resistance', r)
-
-    # def extract_double_sweep(self, ):
+        self.idvg.add_column('resistance'+type, r)
 
     def save_plots(self):
 
@@ -178,7 +181,7 @@ class FETExtractor(Extractor):
         # now save a CSV file of the FET properties
         self.FET.publish_csv('.')
 
-    def _extract_gm(self, fwd=False, bwd=False, vd=None, return_max=False):
+    def _extract_gm(self, FET_instance,  fwd=False, bwd=False, vd=None, return_max=False):
         current, gate = self._sweep_directions(['id', 'vg'], fwd=fwd, bwd=bwd)
 
         # Calculates instantaneous gm at every point, returns ndarray of slopes
@@ -191,11 +194,11 @@ class FETExtractor(Extractor):
 
         # if return max, then return the max and max_i
         if return_max:
-            max_gm, max_gm_i = self.FET.max_slope_value(gm, return_index=True)
+            max_gm, max_gm_i = FET_instance.max_slope_value(gm, return_index=True)
             print("gm = ", max_gm)
             # now check if the max gm was reached before the final Vg point.  If so, then there could be error
             vg = self.idvg.get_column('vg')
-            max_vg = self.FET.max_slope_value(vg)
+            max_vg = FET_instance.max_slope_value(vg)
             print("max Vg = ", max_vg)
             if max_vg == vg[max_gm_i]:
                 warnings.warn('The transconductance (gm) has not reached maximum, potentially resulting in error'

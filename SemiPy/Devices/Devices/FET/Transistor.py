@@ -259,13 +259,15 @@ class AmbipolarFET(FET):
     An Ambipolar FET is a FET that has both p-type and n-type behavior.  SemiPy represents this as two separate N and P FETs.
 
     """
+    NFET_Class = NFET
+    PFET_Class = PFET
     def __init__(self, *args, **kwargs):
 
         super(AmbipolarFET, self).__init__(*args, **kwargs)
 
         # create NFET and PFET sub classes
-        self._NFET = NFET(*args, **kwargs)
-        self._PFET = PFET(*args, **kwargs)
+        self._NFET = self.NFET_Class(*args, **kwargs)
+        self._PFET = self.PFET_Class(*args, **kwargs)
 
     @property
     def NBranch(self):

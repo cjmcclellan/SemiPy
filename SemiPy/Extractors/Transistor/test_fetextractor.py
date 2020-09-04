@@ -6,7 +6,7 @@ from SemiPy.Extractors.Transistor.FETExtractor import FETExtractor
 from SemiPy.Devices.Materials.TwoDMaterials.TMD import MoS2
 from SemiPy.Devices.Materials.Oxides.MetalOxides import SiO2, aIGZO
 from SemiPy.Devices.Materials.Semiconductors.BulkSemiconductors import Silicon
-from SemiPy.Devices.Devices.FET.ThinFilmFET import nTFT, pTFT, aTFT
+from SemiPy.Devices.Devices.FET.ThinFilmFET import nTFT, pTFT, ambiTFT
 from SemiPy.helper.paths import get_abs_semipy_path
 
 from physics.value import Value, ureg
@@ -40,7 +40,6 @@ class TestFETExtractors(unittest.TestCase):
                    length=Value(1, ureg.micrometer))
 
         # SchottkyModel(fet, )
-
         result = FETExtractor(FET=fet, idvg_path=idvg_path, idvd_path=idvd_path)
         print(result.FET.Vt_avg)
         print(result.FET.Vt_fwd)
@@ -72,6 +71,32 @@ class TestFETExtractors(unittest.TestCase):
         # result.FET.publish_csv('.')
 
         # result.save_plots()
+
+    def test_ambiFET(self):
+        idvd_path = get_abs_semipy_path('SampleData/FETExampleData/WSe2_Sample_4_Id_Vd.txt')
+        idvg_path = get_abs_semipy_path('SampleData/FETExampleData/WSe2_Sample_4_Id_Vg.txt')
+
+
+        gate_oxide = SiO2(thickness=Value(30, ureg.nanometer))
+        channel = MoS2(layer_number=1)
+        substrate = Silicon()
+
+        fet = ambiTFT(gate_oxide=gate_oxide, channel=channel, width=Value(1, ureg.micrometer), substrate=substrate,
+                   length=Value(1, ureg.micrometer))
+
+        result = FETExtractor(FET=fet, idvg_path=idvg_path, idvd_path=idvd_path)
+        print("~~~~~~TFT Extracted Values~~~~~~")
+        print("~~~~~~n-type~~~~~~")
+        print(result.FET.NBranch.Vt_avg)
+        print(result.FET.NBranch.Vt_fwd)
+        print(result.FET.NBranch.Vt_bwd)
+        print(result.FET.NBranch.min_ss)
+        print("~~~~~~p-type~~~~~~")
+        print(result.FET.PBranch.Vt_avg)
+        print(result.FET.PBranch.Vt_fwd)
+        print(result.FET.PBranch.Vt_bwd)
+        print(result.FET.PBranch.min_ss)
+
 
     def test_igzo(self):
         # This test models an a-IGZO device with 20nm IGZO, 100nm SiO2 on Si substrate.
