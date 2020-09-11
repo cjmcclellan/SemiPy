@@ -17,7 +17,7 @@ class Extractor(object):
         self.x_data = None
         self.y_data = None
 
-    def _clean_data(self, ndarry):
+    def _clean_data(self, ndarry, remove_zeroes = False):
         """
         Remove all nan and inf from an ndarray by replacing with 0.0
         Args:
@@ -29,9 +29,12 @@ class Extractor(object):
         ndarry[ndarry == np.inf] = 0.0
         ndarry[ndarry == -np.inf] = 0.0
         ndarry = np.nan_to_num(ndarry)
+        if remove_zeroes:
+            ndarry[ndarry == 0.0] = np.inf
+            ndarry[ndarry == -0.0] = np.inf
         return ndarry
 
-    def _slope(self, x_data, y_data, keep_dims=False):
+    def _slope(self, x_data, y_data, keep_dims=False, remove_zeroes = False):
         """
         Compute the slope at all data points
         Args:
@@ -46,7 +49,8 @@ class Extractor(object):
         slope = np.diff(y_data)/np.diff(x_data)
         if keep_dims:
             slope = np.concatenate((slope, slope[..., -1:]), axis=-1)
-        return self._clean_data(slope)
+
+        return self._clean_data(slope, remove_zeroes)
 
     def _plot_line(self, x_min, x_max, a, b):
         x_data = Value.array_like(array=np.linspace(x_min, x_max), unit=x_min.unit)

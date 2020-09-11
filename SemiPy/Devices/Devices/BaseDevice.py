@@ -49,9 +49,9 @@ class BaseDevice(object):
                 prop = self.__dict__[key]
                 # prop = self.publish_prop[key]
                 if isinstance(prop, Value):
-                    f.write("%s,%s,%s\n" % (key, prop.value, prop.unit))
+                    f.write("%s,%s,%s\n" % (key, prop.magnitude, prop.unit))
                 elif isinstance(prop, PhysicalProperty):
-                    f.write("%s,%s,%s\n" % (key, prop.value.value, prop.value.unit))
+                    f.write("%s,%s,%s\n" % (key, prop.value.magnitude, prop.value.unit))
                 else:
                     f.write("%s,%s\n" % (key, prop))
 

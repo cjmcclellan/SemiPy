@@ -27,5 +27,6 @@ class nTFT(NFET, TFT):
     pass
 
 
-class aTFET(AmbipolarFET, TFT):
-    pass
+class ambiTFT(AmbipolarFET, TFT):
+    NFET_Class = nTFT
+    PFET_Class = pTFT

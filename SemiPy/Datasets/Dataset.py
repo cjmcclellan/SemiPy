@@ -158,9 +158,9 @@ class BaseDataSet(object):
 
         self.__assert_valid_column_name(column_name)
 
-        result = self.df[self._get_colmun_names(column_name)].to_numpy()
+        result = self.df[self._get_column_names(column_name)].to_numpy()
         if master_independent_value_range is not None:
-            master_column = self.df[self._get_colmun_names(self.master_independent)].to_numpy()
+            master_column = self.df[self._get_column_names(self.master_independent)].to_numpy()
             # find the values in each column closest to the min and max values
             max_index = np.argmin(np.abs(master_column - np.ones(shape=(master_column.shape[-1],)) * master_independent_value_range[1]), axis=0)
             min_index = np.argmin(np.abs(master_column - np.ones(shape=(master_column.shape[-1],)) * master_independent_value_range[0]), axis=0)
@@ -187,7 +187,7 @@ class BaseDataSet(object):
             result = np.transpose(np.array(temp_result))
         return result
 
-    def _get_colmun_names(self, column_name):
+    def _get_column_names(self, column_name):
         # # first look if the column name is in the super gathered names list.
         # if column_name in self.super_gathered_column_names.keys():
         #     result = []
@@ -234,7 +234,7 @@ class BaseDataSet(object):
         """
         new_column = func(self.get_column(column_name))
 
-        self.df[self._get_colmun_names(column_name)] = new_column
+        self.df[self._get_column_names(column_name)] = new_column
 
     def __assert_valid_column_name(self, column_name):
         assert column_name in self.gathered_column_names.keys(), 'The column name {0} is not in the list of column names {1}'.format(column_name,
@@ -284,7 +284,7 @@ class SetDataSet(BaseDataSet):
 
         # now gather what the secondary independent values are for each set
         if secondary_independent_values is None:
-            assert self._get_colmun_names(self.secondary_independent) is not None,\
+            assert self._get_column_names(self.secondary_independent) is not None,\
                 'Cannot find the required column {0} in the dataset'.format(self.secondary_independent)
             column_values = self.get_column(self.secondary_independent)[:, 0]
         else:
@@ -365,7 +365,7 @@ class SetDataSet(BaseDataSet):
         secondary_column_names = self.secondary_indep_values[secondary_value]
 
         # get all the columns for that name
-        column_names = self._get_colmun_names(column_name)
+        column_names = self._get_column_names(column_name)
 
         # now return any overlapping names in the two lists
         return list(set(column_names).intersection(secondary_column_names))
@@ -405,7 +405,7 @@ class SetDataSet(BaseDataSet):
         # assert column_name in self.column_names, 'The column name {0} is not in the list of column names {1}'.format(column_name,
         #                                                                                                              self.column_names)
         # now return the column
-        # column_names = self._get_colmun_names(column_name)
+        # column_names = self._get_column_names(column_name)
         # only grab columns from that set.
         columns = self.__get_column_name_secondary_value(column_name, secondary_value)
         result = self.df[columns].to_numpy()
@@ -420,7 +420,7 @@ class SetDataSet(BaseDataSet):
             column_name:
             column_data (np.ndarray):
 
-        Returns:self._get_colmun_names(column_name)
+        Returns:self._get_column_names(column_name)
 
         """
         assert isinstance(column_data, np.ndarray), 'The column_data must be of type np.ndarray, not {0}'.format(type(column_data))

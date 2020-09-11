@@ -72,7 +72,7 @@ class FET(Transistor):
         self._add_publish_property('max_gm')
         # self._max_gm_Vd = None
         self._min_ss = SubthresholdSwing(name='minimum subthreshold swing')
-        # self._add_publish_property('_min_ss')
+        self._add_publish_property('min_ss')
         self.Vt_bwd = Voltage(name='Backward Sweep Threshold Voltage')
         self.Vt_fwd = Voltage(name='Forward Sweep Threshold Voltage')
         self.Vt_avg = Voltage(name='Average Threshold Voltage')
@@ -81,6 +81,7 @@ class FET(Transistor):
         self._add_publish_property('hysteresis')
         self.max_Ion = CurrentDensity(name='Maximum Current Density')
         self._add_publish_property('max_Ion')
+        self.min_Ion = CurrentDensity(name='Minimum Current Density')
         # TODO: Vt will depend on Vd.  How should I save that info and adjust for n
 
         # add some interface properties
@@ -113,24 +114,34 @@ class FET(Transistor):
     def norm_Field(self, vd):
         return vd/self.width    # def max_Ion(self):
 
+    @staticmethod
+    def gt(value1, value2):
+        return np.logical_or(np.greater(value1, value2), np.less(value1, -value2))
+
+    def overvoltage(self, vg):
+        # Overvoltage is defined as Vg-Vt when transistor is on
+        return abs(vg - self.Vt_avg.value)
+
     def vg_to_n(self, vg):
         # adding extra values to make the units be centimeter ** -2
         # replace any Vg < Vt_avg with Vt_avg
         if isinstance(vg, np.ndarray):
-            vg[vg < self.Vt_avg.value] = self.Vt_avg.value
+            vg[self.gt(self.Vt_avg.value, vg)] = self.Vt_avg.value
+            # vg[vg < self.Vt_avg.value] = self.Vt_avg.value
             # n = carrier_density(self.gate_oxide.capacitance, vg, self.Vt_avg.value)
             # n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
             #     / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
 
         try:
-            n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * (vg - self.Vt_avg.value)\
+            n = Value(value=1.0, unit=ureg.coulomb) * self.gate_oxide.capacitance * \
+                self.overvoltage(vg) \
                 / (electron_charge_C * Value(value=1.0, unit=ureg.volt * ureg.farad))
 
         except Exception as e:
             assert self.Vt_avg.value is not None, \
                 'You must calculate the average Vt by running FET.compute_properties() before computing the carrier density'
             raise e
-        return n
+        return n # None
 
     @property
     def min_ss(self):
@@ -138,14 +149,14 @@ class FET(Transistor):
 
     @min_ss.setter
     def min_ss(self, _in):
-        if isinstance(_in, np.ndarray):
-            # remove any zeros
-            _in = _in.flatten()
-            zero_val = Value(0.0, _in[0].unit)
-            zero_i = [i for i in range(len(_in)) if _in[i] == zero_val]
-            _in = np.delete(_in, zero_i)
-            _in = self.min_slope_value(_in)
-        _in = _in.adjust_unit(ureg.meter * ureg.millivolt / ureg.amp)
+        # if isinstance(_in, np.ndarray):
+        #     # remove any zeros
+        #     _in = _in.flatten()
+        #     zero_val = Value(0.0, _in[0].unit)
+        #     zero_i = [i for i in range(len(_in)) if _in[i] == zero_val]
+        #     _in = np.delete(_in, zero_i)
+        #     _in = self.min_slope_value(_in)
+        _in = _in.adjust_unit(ureg.micrometer * ureg.millivolt / ureg.ampere)
         self._min_ss = _in
 
     def max_value(self, array, return_index=False):
@@ -185,7 +196,9 @@ class NFET(FET):
         return result
 
     def min_value(self, array, return_index=False):
-        result = abs(array).min()
+        # remove all negative vlues because this is an NFET
+        array = array[array > 0.0]
+        result = array.min()
         if return_index:
             return result, self._arg_min(abs(array))
         return result
@@ -238,7 +251,7 @@ class PFET(FET):
 
     def vg_to_n(self, vg):
         # flip the sign of vg
-        super(PFET, self).vg_to_n(abs(vg))
+        return super(PFET, self).vg_to_n(abs(vg))
 
 
 class AmbipolarFET(FET):
@@ -246,13 +259,15 @@ class AmbipolarFET(FET):
     An Ambipolar FET is a FET that has both p-type and n-type behavior.  SemiPy represents this as two separate N and P FETs.
 
     """
+    NFET_Class = NFET
+    PFET_Class = PFET
     def __init__(self, *args, **kwargs):
 
         super(AmbipolarFET, self).__init__(*args, **kwargs)
 
         # create NFET and PFET sub classes
-        self._NFET = NFET(*args, **kwargs)
-        self._PFET = PFET(*args, **kwargs)
+        self._NFET = self.NFET_Class(*args, **kwargs)
+        self._PFET = self.PFET_Class(*args, **kwargs)
 
     @property
     def NBranch(self):
