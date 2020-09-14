@@ -6,6 +6,7 @@ from SemiPy.config.globals import common_drain_current_names, common_drain_volta
     common_source_current_names, common_source_voltage_names
 import numpy as np
 from physics.value import Value, ureg
+import warnings
 
 
 class BiDirectionalDataSet(SetDataSet):
@@ -34,14 +35,15 @@ class BiDirectionalDataSet(SetDataSet):
         # now divide the data into fwd, bwd sweeps, if they exist
         # get the args where the master independent changes sign.  If there are multiple for each row, raise an error
         # change_i = np.argwhere(np.diff(np.array(self.get_column(self.master_independent), dtype=np.float)) == 0.0)
-        change_i = self._get_sweep_index()
-        self.sweep_number = ((change_i.shape[0]) / self.num_secondary_indep_sets) + 1
+        change_i, self.sweep_number = self._get_sweep_index()
+        # self.sweep_number = ((change_i.shape[0]) / self.num_secondary_indep_sets) + 1
         assert self.sweep_number < 3, 'IV sweeps can only have a single direction or a forward and backward.' \
                                       '  Yours has {0} sweep directions'.format(self.sweep_number)
 
-        assert np.all(change_i[:, 1] == change_i[1, 1]), 'All IV sweeps must have the same number of x data points'
+        if self.sweep_number > 1:
+            assert np.all(change_i[:, 1] == change_i[1, 1]), 'All IV sweeps must have the same number of x data points'
         # now save the change point
-        self.change_i = change_i[1, 1]
+        self.change_i = change_i[0, 1]
 
         # now convert the secondary independents to values
         self._convert_secondary_independent_to_value()
@@ -64,6 +66,7 @@ class BiDirectionalDataSet(SetDataSet):
 
         Returns:
             np.ndarray with all the index points of change in sweep direction
+            number of sweeps in each column
         """
         if array is None:
             array = np.array(self.get_column(self.master_independent), dtype=np.float)
@@ -71,19 +74,28 @@ class BiDirectionalDataSet(SetDataSet):
             array = np.array(array, dtype=np.float)
         # this formula will find the point of change in sweep direction accounting for duplicate final points i.e. Vg = [1, 2, 3, 3, 2, 1] => change_i = [2]
         change_i = np.argwhere(np.abs(np.diff(np.sign(array[..., 2:] - array[..., :-2]))) == 2.0) + 1
-        return change_i + 1
+
+        # now get the number of sweeps
+        number_of_sweeps = ((change_i.shape[0]) / self.num_secondary_indep_sets) + 1
+        # if there are now switches in direction, then make the last i the change point
+        if len(change_i) == 0:
+            change_i = np.array([[i + 1, array.shape[1]] for i in range(array.shape[0])])
+            number_of_sweeps = 1
+        return change_i + 1, number_of_sweeps
 
     def _check_fwd_bwd(self, column_name):
         # check if fwd or bwd are in the column name
         if '_fwd' in column_name:
             if self.sweep_number == 1:
-                raise ValueError('You are attempting to access the forward sweep for this IV dataset,'
+                warnings.warn('You are attempting to access the forward sweep for this IV dataset,'
                                  'but there is only 1 sweep direction.')
+                return column_name[:-4], False, False
             return column_name[:-4], True, False
         elif '_bwd' in column_name:
             if self.sweep_number == 1:
-                raise ValueError('You are attempting to access the backward sweep for this IV dataset,'
+                warnings.warn('You are attempting to access the backward sweep for this IV dataset,'
                                  'but there is only 1 sweep direction.')
+                return column_name[:-4], False, False
             return column_name[:-4], False, True
         else:
             return column_name, False, False
@@ -106,7 +118,7 @@ class BiDirectionalDataSet(SetDataSet):
                                                                    master_independent_value_range)
         # if the column was indexed, we need to locate the new inflection point
         if master_independent_value_range is not None and (fwd or bwd):
-            change_i = self._get_sweep_index(array=super(BiDirectionalDataSet, self).get_column(self.master_independent,
+            change_i, _ = self._get_sweep_index(array=super(BiDirectionalDataSet, self).get_column(self.master_independent,
                                                                                                 False, master_independent_value_range))
             # if no inflection point, then just return the column data
             if len(change_i) == 0:

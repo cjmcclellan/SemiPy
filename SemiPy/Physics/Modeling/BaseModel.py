@@ -24,7 +24,7 @@ class BaseModel(object):
         raise NotImplementedError('You must implement the output function for the output of the model.')
 
 
-class ModelInput(object):
+class ModelInput(np.ndarray):
     """
     Model input class for making inputs to physics models.  Defaults to num if given.
     Args:
@@ -34,7 +34,20 @@ class ModelInput(object):
         step (float or int):
     """
 
-    def __init__(self, min, max, unit, num=None, step=None):
+    def __new__(cls, min, max, unit, num=None, step=None, *args, **kwargs):
+        assert num is not None or step is not None, 'You must give a step or num value'
+
+        if num is not None:
+            range = np.linspace(min, max, num)
+
+        elif step is not None:
+            range = np.arange(min, max, step)
+
+        range = Value.array_like(range, unit=unit)
+
+        return range
+
+    def __init__(self, min, max, unit, num=None, step=None, *args, **kwargs):
 
         assert num is not None or step is not None, 'You must give a step or num value'
 
@@ -45,3 +58,9 @@ class ModelInput(object):
             self.range = np.arange(min, max, step)
 
         self.range = Value.array_like(self.range, unit=unit)
+
+        super(ModelInput, self).__init__(self.range)
+
+    # def __get__(self, instance, owner):
+    #     return self.range
+    # def __se
