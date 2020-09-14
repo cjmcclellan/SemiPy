@@ -78,12 +78,12 @@ class FETExtractor(Extractor):
 
         # now run the extractions
         if isinstance(self.FET, AmbipolarFET):
-            self.__extract_data(self.FET.NBranch)
-            self.__extract_data(self.FET.PBranch)
+            self.__extract_data(self.FET.NBranch, True)
+            self.__extract_data(self.FET.PBranch, True)
         else:
-            self.__extract_data(self.FET)
+            self.__extract_data(self.FET, False)
 
-    def __extract_data(self, FET_instance): # Added type to indicate n/p/a-type
+    def __extract_data(self, FET_instance, is_ambi): # Added type to indicate n/p/a-type
         """
         Extract the properties of the FET given the available data, including transconductance (gm), subthreshold swing (ss), field-effect
         mobility (mufe), threshold voltage (vt), max on current (max_Ion), min off current at max Ion Vd (min_Ioff),
@@ -93,10 +93,13 @@ class FETExtractor(Extractor):
         print('starting extraction')
 
         # check the type of FET inserted
-        if isinstance(FET_instance, NFET):
-            type = "_n"
-        elif isinstance(FET_instance, PFET):
-            type = "_p"
+        if is_ambi:
+            if isinstance(FET_instance, NFET):
+                type = "_n"
+            elif isinstance(FET_instance, PFET):
+                type = "_p"
+        else:
+            type = ""
 
         # now compute the vt and gm using the max Vd
         vd = self.idvg.get_secondary_indep_values()
