@@ -46,7 +46,7 @@ class TLMExtractor(Extractor):
 
     def __init__(self, lengths, widths, channel, gate_oxide, FET_class, vd_values=None, idvg_path=None, *args, **kwargs):
 
-        super(TLMExtractor, self).__init__(*args, **kwargs)
+        super(TLMExtractor, self).__init__()
 
         # now create FETExtractors for every set of IdVg data
         self.FETs = []
@@ -62,7 +62,7 @@ class TLMExtractor(Extractor):
             for i, idvg in enumerate(idvg_data):
                 path = os.path.join(root, idvg)
 
-                fet = FET_class(gate_oxide=gate_oxide, channel=channel, width=widths, length=lengths[i])
+                fet = FET_class(gate_oxide=gate_oxide, channel=channel, width=widths, length=lengths[i], *args, **kwargs)
                 self.FETs.append(FETExtractor(fet, idvg_path=path,
                                               vd_values=vd_values))
                 # self.FETs.append(FETExtractor(width=widths, length=lengths[i], epiox=epiox, tox=tox,
@@ -109,12 +109,18 @@ class TLMExtractor(Extractor):
             # now we can start computing TLM properties
             n_full = new_dataset.get_column('n')
             # grab the min max of n and the max min of n
-            min_max_n = np.min(np.max(n_full, axis=1))
+            min_max_n = np.min(np.max(n_full, axis=1)) # value = 43903090000000.0 = 4.39e+13
             max_min_n = np.max([np.min(n_full[i][np.where(n_full[i, :] >= 1.0)[0]]) for i in range(n_full.shape[0])])
-            n = new_dataset.get_column('n', master_independent_value_range=[max_min_n, min_max_n.value])
+            # value = 989429999999.9993 = 9.89e+11
+
+            # expr: np.where((n_full[1]>max_min_n) & (n_full[1]<min_max_n))
+            # looks like for n_full[1] range is 29-122 with gap 68-83 for total of 78 values
+            # n_full[0]: 37-114, missing 75-76 for total 76 values
+            # n_full[2]: 31-120, missing 68-83 for total 76 values
+            n = new_dataset.get_column('n', master_independent_value_range=[max_min_n, min_max_n.magnitude])
             n_r = np.round(np.array(n, dtype=float) * 1e-12)
-            r = new_dataset.get_column('r', master_independent_value_range=[max_min_n, min_max_n.value])
-            l = new_dataset.get_column('l', master_independent_value_range=[max_min_n, min_max_n.value])
+            r = new_dataset.get_column('r', master_independent_value_range=[max_min_n, min_max_n.magnitude])
+            l = new_dataset.get_column('l', master_independent_value_range=[max_min_n, min_max_n.magnitude])
 
             n_units = '10<sup>12</sup> cm<sup>-2</sup>'
             r_units = '\u03A9\u2022\u03BCm'  # ;&times;&mu;m'
