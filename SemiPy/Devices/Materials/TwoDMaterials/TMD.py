@@ -20,14 +20,14 @@ class MoS2(TwoDMaterial, Semiconductor):
                                                                     input_values={'temperature': Value(300, ureg.kelvin)},
                                                                     citation=MonolayerMoS2ThermalConductivityYan)
 
-    saturation_velocity = matprop.Bulk.Electrical.SaturationVelocity(value=Value(4e6, ureg.centimeter/ureg.seconds),
+    saturation_velocity = matprop.Bulk.Electrical.SaturationVelocity(value=Value(5e6, ureg.centimeter/ureg.seconds),
                                                                      input_values={'temperature': Value(300, ureg.kelvin)})
 
     layer_thickness = matprop.Bulk.Basic.Thickness(value=Value(0.615, ureg.nanometer),
                                                    citation=MonolayerMoS2ThicknessDickinson)
 
     #ADDED
-    bandgap = matprop.Bulk.Electrical.BandGap(value=Value(1.8, ureg.electron_volt))
+    bandgap = matprop.Bulk.Electrical.BandGap(value=Value(2.2, ureg.electron_volt))
 
     def __init__(self, *args, **kwargs):
         super(MoS2, self).__init__(*args, **kwargs)

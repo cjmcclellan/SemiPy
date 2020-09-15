@@ -38,13 +38,12 @@ class Stanford2DSModel(BaseModel):
     k = Value(scipy.constants.physical_constants["Boltzmann constant in eV/K"][0], ureg.eV/ureg.kelvin)
     k_J = Value(scipy.constants.physical_constants["Boltzmann constant"][0], ureg.J/ ureg.kelvin)
     hcross = Value(scipy.constants.physical_constants["reduced Planck constant"][0], ureg.J * ureg.seconds)
-    q = Value(scipy.constants.physical_constants["elementary charge"][0] , ureg.coulombs)
 
-    #Constants for Quantum Capacitance Calculation that need to be defined
-    WFTG = Value(4.3,ureg.volt) #Top Gate Work Function [V]
-    WFBG = Value(4.3,ureg.volt) #Bottom Gate Work Function [V]
-    VFBT = Value(0.305, ureg.volt) #Top Gate Cutoff voltage[V]
-    VFBB = Value(0.305, ureg.volt)  #Bottom Gate Cutoff voltage[V]
+    # Constants for Quantum Capacitance Calculation that need to be defined
+    WFTG = Value(4.3, ureg.volt) # Top Gate Work Function [V]
+    WFBG = Value(4.3, ureg.volt) # Bottom Gate Work Function [V]
+    VFBT = Value(0.305, ureg.volt) # Top Gate Cutoff voltage[V]
+    VFBB = Value(0.305, ureg.volt)  # Bottom Gate Cutoff voltage[V]
 
     # WFTG = 4.3
     # WFBG = 4.3
@@ -90,10 +89,10 @@ class Stanford2DSModel(BaseModel):
 
         # return Value(100, ureg.nanometers)
 
-    def compute_power(self, Vds, previous_Id):
-        Vds = self.compute_vds_rc(Vds, previous_Id)
+    def compute_power(self, Vds, Vgs, mobility, Id):
+        Vds = self.compute_vds_rc(Vds, Vgs, mobility)
 
-        return previous_Id * Vds
+        return Id * Vds
 
     def compute_device_thermal_conductance(self):
         weff = self.FET.width + 2 * self.FET.gate_oxide.thickness
@@ -109,9 +108,12 @@ class Stanford2DSModel(BaseModel):
 
         return g
 
-    def compute_vds_rc(self, Vds, previous_Id):
+    def compute_vds_rc(self, Vds, Vgs, mobility):
         if self.FET.Rc is not None:
-            Vds = Vds - 2 * previous_Id * self.FET.Rc / self.FET.width
+            # Vds = Vds - 2 * previous_Id * self.FET.Rc / self.FET.width
+            rch = self.compute_channel_resistance(self.FET.vg_to_n(Vgs), mobility)
+
+            Vds = Vds * rch / (rch + 2 * self.FET.Rc)
 
         return Vds
 
@@ -170,14 +172,14 @@ class Stanford2DSModel(BaseModel):
 
     def compute_quantum_cap(self, ambient_temperature, Vgs):
 
-        T = Value(ambient_temperature, ureg.kelvin)
+        T = ambient_temperature
         # Material Parameters
         self.g = 2  # Spin Degenracy
         self.gv1 = 1  # Degenracy of first valley
         self.gv2 = 1  # Degeneracy of second valley
         self.me1_eff = Value(0.45 * scipy.constants.electron_mass, ureg.kilograms)  # Effective mass of first valley
         self.me2_eff = Value(0.45 * scipy.constants.electron_mass, ureg.kilograms)  # Effective mass of second valley
-        self.vth = self.k_J * T / self.q
+        self.vth = self.k_J * T / electron_charge_C
         self.delEC = 3 * self.vth  # Energy difference from the first valley(Set high to ignore this valley in charge calculations)
         self.epsilon_channel = self.FET.channel.relative_permittivity * free_space_permittivity_F_div_cm
         self.d = self.FET.channel.thickness.base_units()  # channel thickness
@@ -230,12 +232,12 @@ class Stanford2DSModel(BaseModel):
             self.p = Value(self.phi[i], ureg.volts)
 
             self.f[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta - math.exp(
-                (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
+                (self.epsilon_channel * self.d / (electron_charge_C * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
 
             self.fd[i] = (1 + math.exp((self.p - VS) / self.vth)) ** self.alpha * (
                         1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) ** self.beta * (((self.beta * math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)) / (self.vth * (
                                        1 + math.exp((self.p - VS) / self.vth) * math.exp(-self.delEC / self.vth)))) + ((self.alpha * math.exp((self.p - VS) / self.vth)) / (
-                                   self.vth * (1 + math.exp((self.p - VS) / self.vth))))) + ((self.A ** 2) * (self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp((self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
+                                   self.vth * (1 + math.exp((self.p - VS) / self.vth))))) + ((self.A ** 2) * (self.epsilon_channel * self.d / (electron_charge_C * self.NDOS))) * math.exp((self.epsilon_channel * self.d / (electron_charge_C * self.NDOS)) * (B - (self.A ** 2) * self.p) + (self.Nimp / self.NDOS))
             iter = 0
             while abs(self.f[i]) > 1e-06:  # termination condition
                 iter = iter + 1
@@ -244,7 +246,7 @@ class Stanford2DSModel(BaseModel):
                 self.f[i + 1] = (1 + math.exp((p_1 - VS) / self.vth)) ** self.alpha * (
                         1 + math.exp((p_1 - VS) / self.vth) * math.exp(
                     -self.delEC / self.vth)) ** self.beta - math.exp(
-                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * p_1) + (
+                    (self.epsilon_channel * self.d / (electron_charge_C * self.NDOS)) * (B - (self.A ** 2) * p_1) + (
                                 self.Nimp / self.NDOS))
 
                 self.fd[i + 1] = (1 + math.exp((p_1 - VS) / self.vth)) ** self.alpha * (
@@ -257,17 +259,17 @@ class Stanford2DSModel(BaseModel):
                                                                                      self.vth * (1 + math.exp(
                                                                                  (p_1 - VS) / self.vth))))) + (
                                          (self.A ** 2) * (
-                                             self.epsilon_channel * self.d / (self.q * self.NDOS))) * math.exp(
-                    (self.epsilon_channel * self.d / (self.q * self.NDOS)) * (B - (self.A ** 2) * p_1) + (
+                                             self.epsilon_channel * self.d / (electron_charge_C * self.NDOS))) * math.exp(
+                    (self.epsilon_channel * self.d / (electron_charge_C * self.NDOS)) * (B - (self.A ** 2) * p_1) + (
                                 self.Nimp / self.NDOS))
                 i = i + 1
 
             self.phis[j] = self.phi[i]
             self.ph = Value(self.phis[j], ureg.volts)
             # Charge density in the 2D layer(m ^ -2)
-            self.n2d[j] = (self.epsilon_channel * self.d / self.q) * (B - (self.A ** 2) * self.ph) + self.Nimp
+            self.n2d[j] = (self.epsilon_channel * self.d / electron_charge_C) * (B - (self.A ** 2) * self.ph) + self.Nimp
             # Electic field at the surface (V/m)
-            Es[j] = self.q * self.n2d[j] / self.epsilon_channel
+            Es[j] = electron_charge_C * self.n2d[j] / self.epsilon_channel
             # Electric field in the oxide
             Eox[j] = (self.epsilon_ox / self.epsilon_channel) * ((VG[j] - self.VFBT - self.phis[j]) / self.EOT)
 
@@ -275,8 +277,8 @@ class Stanford2DSModel(BaseModel):
         self.phis = np.trim_zeros(self.phis, 'b')
 
         # Capacitance Calculation
-        Cg = Value( np.diff(self.q * self.n2d * 1e-4) / np.diff(VG)[0],  ureg.coulomb / ureg.meter ** 2 / ureg.volt)
-        CQ = Value(np.diff(self.q * self.n2d * 1e-4) / np.diff(self.phis)[0], ureg.coulomb / ureg.meter ** 2 / ureg.volt )
+        Cg = Value( np.diff(electron_charge_C * self.n2d * 1e-4) / np.diff(VG)[0],  ureg.coulomb / ureg.meter ** 2 / ureg.volt)
+        CQ = Value(np.diff(electron_charge_C * self.n2d * 1e-4) / np.diff(self.phis)[0], ureg.coulomb / ureg.meter ** 2 / ureg.volt )
 
         #print("Vgs is ", VG)
         print("CQ is ", CQ.adjust_unit(ureg.microfarad / (ureg.centimeter ** 2)))
@@ -284,17 +286,17 @@ class Stanford2DSModel(BaseModel):
         return CQ
 
     def compute_diffusion_current(self, ambient_temp, vgs, vd):
-        #Capacitance Values
+        # Capacitance Values
         c_Q = self.compute_quantum_cap(ambient_temp, vgs)
         # self.c_Q = Value(0, ureg.meter ** -2 * ureg.coulomb / ureg.volt)
         c_i = self.cox_t
-        # c_it = self.q * Value(1e16, ureg.meter ** -2 / ureg.volt)
+        # c_it = electron_charge_C * Value(1e16, ureg.meter ** -2 / ureg.volt)
         c_it = Value(0, ureg.meter ** -2 * ureg.coulomb / ureg.volt)
         cap_r = 1 + (c_Q + c_it) / c_i
 
         #Mobility
         mobility_temp = Value(295, ureg.kelvin)
-        T = Value(ambient_temp, ureg.kelvin)
+        T = ambient_temp
         mobility = self.compute_mobility_temperature(self.FET.max_mobility, mobility_temp, T).adjust_unit(ureg.meter ** 2 / ureg.second / ureg.volt)
 
         #Compute Diffusion Current
@@ -303,7 +305,7 @@ class Stanford2DSModel(BaseModel):
         I_diff_term_1 = math.log(math.exp((vgs - self.FET.Vt_avg)/(self.vth * cap_r)) + 1)
         I_diff_term_2 = math.log(math.exp((vgs - self.FET.Vt_avg - vd) / (self.vth * cap_r)) + 1)
 
-        i_diff = (self.vth * electron_charge_C * mobility * (self.NDOS / self.FET.length) * (I_diff_term_1 - I_diff_term_2)).base_units()
+        i_diff = (self.vth * electron_charge_C * mobility * (self.FET.width * self.NDOS / self.FET.length) * (I_diff_term_1 - I_diff_term_2)).base_units()
 
         print("Diffusion Current is {0} at Vg = {1}".format(i_diff, vgs))
 
@@ -330,9 +332,8 @@ class Stanford2DSModel(BaseModel):
         # plt.yscale('log')
         # plt.show()
 
-
-        #def model_output(self, Vds, Vgs, ambient_temperature=None):
-    def model_output(self, Vds, Vgs, heating=True, vsat=True, ambient_temperature=None, iterations=2, linestyle='-'):
+    def model_output(self, Vds, Vgs, heating=True, vsat=True, diffusion=True, drift=True,
+                     ambient_temperature=None, iterations=2, linestyle='-'):
         mobility_temp = Value(295, ureg.kelvin)
         if ambient_temperature is None:
             ambient_temperature = Value(295, ureg.kelvin)
@@ -352,24 +353,24 @@ class Stanford2DSModel(BaseModel):
 
         # create a holder for the data
         idvd_data = {}
-        for vg in Vgs.range:
+        for vg in Vgs:
             idvd_data['Id_{0}'.format(vg)] = []
             idvd_data['T_{0}'.format(vg)] = []
             idvd_data['Add_{0}'.format(vg)] = []
             idvd_data['vsat_{0}'.format(vg)] = []
-        idvd_data['Vds'] = Vds.range
+        idvd_data['Vds'] = Vds
 
         # now loop through the Vgs values
-        for vgs in Vgs.range:
+        for vgs in Vgs:
             # first calculate an initial Id
             prev_Id = Value(0.0, ureg.amp)
             # prev_Id = self.compute_drift_current(Vds.range[0], self.FET.max_mobility, Vgs.range[0], prev_Id)
-
+            effective_mobility = self.FET.max_mobility
             # now loop through each Vds value
-            for vds in Vds.range:
+            for vds in Vds:
                 # for i in range(iterations):
                 # vds = self.compute_vds_rc(vds, prev_Id)
-                power = self.compute_power(vds, prev_Id)
+                power = self.compute_power(vds, vgs, effective_mobility, prev_Id)
                 # If self heating is turned off, then just use the ambient tempeature
                 if not heating:
                     temperature = ambient_temperature
@@ -378,8 +379,8 @@ class Stanford2DSModel(BaseModel):
 
                 # compute the new mobility at this temperature
                 effective_mobility = self.compute_mobility_temperature(self.FET.max_mobility,
-                                                                         mobility_temp,
-                                                                         temperature)
+                                                                       mobility_temp,
+                                                                       temperature)
                 # now compute the mobility at this field
 
                 if vsat:
@@ -387,48 +388,19 @@ class Stanford2DSModel(BaseModel):
                     idvd_data['vsat_{0}'.format(vgs)].append(vsat)
 
                 # now calculate the new current
-                prev_Id = self.compute_drift_current(vds, effective_mobility, vgs, prev_Id).base_units()
+                new_Id = Value(0.0, ureg.amp)
 
-                idvd_data['Id_{0}'.format(vgs)].append(prev_Id / self.FET.width)
-                idvd_data['T_{0}'.format(vgs)].append(temperature)
+                if drift and vgs > self.FET.Vt_avg:
+                    new_Id += self.compute_drift_current(vds, effective_mobility, vgs, prev_Id).base_units()
 
+                if diffusion:
+                    new_Id += self.compute_diffusion_current(temperature, vgs, vds)
 
-        # for vgs in Vgs.range:
-        #     plt.scatter(idvd_data['Vds'], idvd_data['T_{0}'.format(vgs)],
-        #              label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10))
-        # plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
-        # plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
-        # plt.ylabel('Temperature (K)', fontsize=16)
-        # plt.legend()
-        # plt.show()
-        # plt.savefig('Temp_plot_at_{0}'.format(ambient_temperature))
-        # plt.show()
+                # idvd_data['Vg = {0}'.format(vgs)].append([])
+                idvd_data['Id_{0}'.format(vgs)].append(new_Id / self.FET.width)
 
-        # for vgs in Vgs.range:
-        #     plt.scatter(idvd_data['Vds'], idvd_data['vsat_{0}'.format(vgs)],
-        #                 label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10))
-        # plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
-        # plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
-        # plt.ylabel('vsat (cm/s)', fontsize=16)
-        # plt.legend()
-        # plt.show()
-        # plt.savefig('vsat_plot_at_{0}'.format(ambient_temperature))
-        # plt.show()
+                prev_Id = new_Id
+                # idvd_data['T_{0}'.format(vgs)].append(temperature)
 
-        # idvd_plot = BasicPlot(x_label='VDS (V)', y_label='ID ({0})'.format(I_units), marker_size=8.0)
-        #
-        # for vgs in Vgs.range:
-        #     idvd_plot.add_data(x_data=idvd_data['Vds'], y_data=[i * 1e6 for i in idvd_data['Id_{0}'.format(vgs)]],
-        #                        mode='markers', name='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), text='')
-        #
-        # # idvd_plot.save_plot(name='IdVd_plot_at_{0}'.format(ambient_temperature))
-        #
-        # temp_plot = BasicPlot(x_label='VDS (V)', y_label='Temperature (K)', marker_size=8.0)
-        #
-        # for vgs in Vgs.range:
-        #     temp_plot.add_data(x_data=idvd_data['Vds'], y_data=idvd_data['T_{0}'.format(vgs)], mode='markers',
-        #                        name='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), text='')
-
-        # temp_plot.save_plot(name='Temp_plot_at_{0}'.format(ambient_temperature))
         return idvd_data
 

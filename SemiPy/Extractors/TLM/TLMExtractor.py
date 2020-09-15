@@ -44,6 +44,8 @@ class TLMExtractor(Extractor):
         >>> tlm.save_tlm_plots()
     """
 
+    maximum_n_varience = Value(8e11, ureg.centimeter ** -2)
+
     def __init__(self, lengths, widths, channel, gate_oxide, FET_class, vd_values=None, idvg_path=None, *args, **kwargs):
 
         super(TLMExtractor, self).__init__()
@@ -91,6 +93,9 @@ class TLMExtractor(Extractor):
         # convert to np arrays for easy indexing
         self.data_dict = {key: np.array(data) for key, data in self.data_dict.items()}
 
+        # make sure there is actually data in the data_dict
+        assert len(self.data_dict['n']) != 0, 'There is no data in the file path you gave.  Make sure the path is correct.'
+
         for i, vd in enumerate(self.vd_values):
             new_dataset = TLMDataSet(data_path=pd.DataFrame.from_dict({key + '_' + str(j): self.data_dict[key][j, i, :]
                                                                        for j in range(len(lengths))
@@ -108,9 +113,13 @@ class TLMExtractor(Extractor):
 
             # now we can start computing TLM properties
             n_full = new_dataset.get_column('n')
-            # grab the min max of n and the max min of n
-            min_max_n = np.min(np.max(n_full, axis=1)) # value = 43903090000000.0 = 4.39e+13
-            max_min_n = np.max([np.min(n_full[i][np.where(n_full[i, :] >= 1.0)[0]]) for i in range(n_full.shape[0])])
+
+            # get the column with the lowest max min
+            min_max_n_col = np.argmin(np.max(n_full, axis=1))
+            # get the min_max n value
+            min_max_n = np.min(np.max(n_full, axis=1))
+            # now get the min n value from the column with the min_max_n.  This is important to ensure we get a rectangular n array
+            max_min_n = np.partition(n_full[min_max_n_col][np.where(n_full[min_max_n_col, :] >= 1.0)[0]], 2)[2]
             # value = 989429999999.9993 = 9.89e+11
 
             # expr: np.where((n_full[1]>max_min_n) & (n_full[1]<min_max_n))
@@ -118,6 +127,16 @@ class TLMExtractor(Extractor):
             # n_full[0]: 37-114, missing 75-76 for total 76 values
             # n_full[2]: 31-120, missing 68-83 for total 76 values
             n = new_dataset.get_column('n', master_independent_value_range=[max_min_n, min_max_n.magnitude])
+
+            # check to make sure the n values are close enough.  If the Vg step is not fine enough and the device Vts are hihgly varied, the n values may not be close enough
+            # to extract TLM data at a specific n
+            max_n_varience = np.max(n[:, 1]) - np.min(n[:, 1])
+            assert max_n_varience < self.maximum_n_varience, 'Varience in carrier density between the devices is {0}, which is greater than {1}.  As such,' \
+                                                             'accurate TLM extraction is not possible.  This could be the result of too small a gate' \
+                                                             'voltage step and high varience between device threshold voltages.  You can try to remove ' \
+                                                             'device data with high varience, or lower the maximum_n_varience value in the' \
+                                                             'TLMExtractor object.'.format(max_n_varience, self.maximum_n_varience)
+
             n_r = np.round(np.array(n, dtype=float) * 1e-12)
             r = new_dataset.get_column('r', master_independent_value_range=[max_min_n, min_max_n.magnitude])
             l = new_dataset.get_column('l', master_independent_value_range=[max_min_n, min_max_n.magnitude])

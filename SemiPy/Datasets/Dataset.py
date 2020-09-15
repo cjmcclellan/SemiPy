@@ -254,6 +254,13 @@ class BaseDataSet(object):
         """
         create_scatter_plot(x_data=self.get_column(x_column), y_data=self.get_column(y_column), scale=scale, autoscale=autoscale)
 
+    def get_master_indep_column(self):
+        """
+        Get the column data for the master independent variable
+        Returns: np.ndarray
+
+        """
+        return self.get_column(self.master_independent)
     # def add_super_set(self, set_name, set_values):
     #     """
     #     Add a super set to the DataSet
