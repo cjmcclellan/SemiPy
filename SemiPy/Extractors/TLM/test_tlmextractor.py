@@ -31,6 +31,11 @@ class TestTLMExtractors(unittest.TestCase):
 
         result.save_tlm_plots()
 
+    def assert_value_equals(self, result_value, true_value, value_name):
+
+        # test the value equals. result_value should be of type PhysicalProperty, so check the value property
+        self.assertAlmostEqual(result_value.magnitude, true_value, 1,  'Error in the TLM extractor. The {0} should be {1} but it is {2}'
+                         .format(value_name, true_value, result_value))
 
 # if __name__ == '__main__':
 #     test = TestFETExtractors()

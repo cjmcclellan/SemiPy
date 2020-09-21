@@ -159,7 +159,7 @@ class TLMExtractor(Extractor):
                 r_plot.add_data(x_data=l[:, i], y_data=r[:, i], mode='markers', name='n = {0} {1}'.format(n_r[0][i], n_units), text='n')
                 r_plot.add_line(x_data=[0.0, max_l], y_data=[float(rc[i]), float(r[-1, i])], name=None)
 
-            r_plot.save_plot(name='r_at_vd_{0}'.format(vd))
+            #r_plot.save_plot(name='r_at_vd_{0}'.format(vd))
 
             rc_plot = BasicPlot(x_label='carrier density {0}'.format(n_units), y_label='contact resistance {0}'.format(r_units),
                                 marker_size=8.0)
@@ -167,12 +167,12 @@ class TLMExtractor(Extractor):
             rc_plot.add_data(x_data=n[0] * 1e-12, y_data=rc, error_y={'type': 'data', 'array': np.array(rc_error, dtype=float), 'visible': True},
                              mode='markers', name='n', text='n')
 
-            rc_plot.save_plot(name='rc_at_vd_{0}'.format(vd))
+            #rc_plot.save_plot(name='rc_at_vd_{0}'.format(vd))
 
             rsheet_plot = BasicPlot(x_label='carrier density {0}'.format(n_units), y_label='sheet resistance', marker_size=8.0)
 
             rsheet_plot.add_data(x_data=n[0] * 1e-12, y_data=r_sheet, error_y={'type': 'data', 'array': np.array(r_sheet_error, dtype=float),
                                                                        'visible': True}, mode='markers', name='n', text='n')
 
-            rsheet_plot.save_plot(name='rsheet_at_vd_{0}'.format(vd))
+            #rsheet_plot.save_plot(name='rsheet_at_vd_{0}'.format(vd))
 
