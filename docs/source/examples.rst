@@ -66,3 +66,34 @@ Calling :code:`TLM.save_plots()` will then save the IdVd and IdVg data plots
 .. figure:: rc_at_vd_1.0.svg
 
 .. figure:: rsheet_at_vd_1.0.svg
+
+
+
+Modeling 2D FETs
+------------------
+
+Below is a simple example of modeling a 2D FET
+
+.. code-block:: python
+
+   from SemiPy.Extractors.TLM.TLMExtractor import TLMExtractor
+   from physics.value import Value, ureg
+
+   idvg_path = './TLMExampleData'
+
+   widths = Value(4.0, ureg.micrometer)
+   lengths = Value.array_like(np.array([1.0, 0.5, 2.0]), unit=ureg.micrometer)
+   tox = Value(90, ureg.nanometer)
+
+   TLM = TLMExtractor(widths=widths, lengths=lengths, tox=tox, epiox=3.9,
+                        device_polarity='n', idvg_path=idvg_path, vd_values=[1.0, 2.0])
+
+   TLM.save_tlm_plots()
+
+Calling :code:`TLM.save_plots()` will then save the IdVd and IdVg data plots
+
+.. figure:: r_at_vd_1.0.svg
+
+.. figure:: rc_at_vd_1.0.svg
+
+.. figure:: rsheet_at_vd_1.0.svg

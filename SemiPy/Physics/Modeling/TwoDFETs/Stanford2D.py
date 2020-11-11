@@ -358,6 +358,8 @@ class Stanford2DSModel(BaseModel):
             idvd_data['T_{0}'.format(vg)] = []
             idvd_data['Add_{0}'.format(vg)] = []
             idvd_data['vsat_{0}'.format(vg)] = []
+            idvd_data['Vgs_{0}'.format(vg)] = []
+            idvd_data['n_{0}'.format(vg)] = []
         idvd_data['Vds'] = Vds
 
         # now loop through the Vgs values
@@ -400,7 +402,10 @@ class Stanford2DSModel(BaseModel):
                 idvd_data['Id_{0}'.format(vgs)].append(new_Id / self.FET.width)
 
                 prev_Id = new_Id
-                # idvd_data['T_{0}'.format(vgs)].append(temperature)
+                idvd_data['T_{0}'.format(vgs)].append(temperature)
+                idvd_data['n_{0}'.format(vgs)].append(self.FET.vg_to_n(vgs))
+                idvd_data['Vgs_{0}'.format(vgs)].append(vgs)
+
 
         return idvd_data
 

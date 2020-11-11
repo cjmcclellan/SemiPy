@@ -6,7 +6,60 @@ Home-page: https://2d.stanford.edu/semipy
 Author: Connor McClellan
 Author-email: cjmcc@stanford.com
 License: BSD-3-Clause  # Example license
-Description: 
+Description: # SemiPy Framework
+        
+        This is the main repository for the open source SemiPy data analysis framework.  SemiPy is meant for plotting, analyzing, modeling, and documenting semiconductor electronic devices.
+        
+        This README is geared towards users that want to make contributions to the SemiPy code.  If you are only interested in using SemiPy for your own data anlysis, then you should just install SemiPy as a python package.  Go to this link to follow installation instructions.
+        
+        ## Contributing Code
+        As most users of SemiPy do not have experience contributing to open source projects, this Readme will discuss the code contributing process.
+        
+        ### Why Would I Want to Contribute Code?
+        Working on open source projects is a good way to improve your code skills, make an impact to the field, and adjust the project to better meet your needs (and likely someone else's).
+        
+        ### How Do I Contribute Code?
+        
+        
+        ### How Do I Join The Contributors List?
+        Most contributors are graduate students working on semiconductor device research, but anyone can make contributions has long as they demonstrate sufficent domain knowledge of semiconductors.
+        
+        To join the SemiPy contributors list, we recommend you send the current project leader an email outlining why you would like to join and attach your resume.
+        
+        ## Types of Code Contributions
+        SemiPy is broken into three main categories:
+        (1) <b>Datasets</b> for plotting and extracting data from semicondcutor device data
+        (2) <b>Database</b> for recorrding properties of materials and devices
+        (3) <b>Modeling</b> for modeling the physics of semiconductor devices
+        
+        To make contributions to each SemiPy subsection, look at the README.md files in their respective repositories
+        
+        ### Dataset Contributions
+        
+        ### Database Contributions
+        Making contributions to the database is the simplest way to make SemiPy contributions.  
+        
+        ## Install
+        
+        To install the necessary libraries, make a virtual environment and install the python packages in the
+        requirements.txt file.
+        
+        `virtualenv -p python3 env`
+        
+        `source env/bin/activate`
+        
+        `pip install -r requirements.txt`
+        
+        
+        ### Windows
+        Make sure to have python3 installed and callable on your machine.
+        
+        Using the Command Line, navigate to the directory you want install SemiPy.
+        
+        ### Linux
+        make sure to install orca for plotting by running
+        
+        `sudo apt install orca`
         
 Platform: UNKNOWN
 Classifier: Intended Audience :: Developers

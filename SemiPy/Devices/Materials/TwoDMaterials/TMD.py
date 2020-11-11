@@ -20,7 +20,7 @@ class MoS2(TwoDMaterial, Semiconductor):
                                                                     input_values={'temperature': Value(300, ureg.kelvin)},
                                                                     citation=MonolayerMoS2ThermalConductivityYan)
 
-    saturation_velocity = matprop.Bulk.Electrical.SaturationVelocity(value=Value(5e6, ureg.centimeter/ureg.seconds),
+    saturation_velocity = matprop.Bulk.Electrical.SaturationVelocity(value=Value(3.2e6, ureg.centimeter/ureg.seconds),
                                                                      input_values={'temperature': Value(300, ureg.kelvin)})
 
     layer_thickness = matprop.Bulk.Basic.Thickness(value=Value(0.615, ureg.nanometer),
