@@ -76,6 +76,10 @@ SemiPy/Physics/Modeling/TwoDFETs/__init__.py
 SemiPy/Physics/Modeling/TwoDFETs/test.py
 SemiPy/Physics/Modeling/TwoDFETs/test_Stanford2D.py
 SemiPy/Physics/Modeling/TwoDFETs/test_Stanford2D_idiff.py
+SemiPy/Plotting/BasicPlot.py
+SemiPy/Plotting/__init__.py
+SemiPy/Plotting/IVPlotting/IVPlot.py
+SemiPy/Plotting/IVPlotting/__init__.py
 SemiPy/SampleData/__init__.py
 SemiPy/Tests/__init__.py
 SemiPy/Tests/2DFET_Tests/__init__.py
