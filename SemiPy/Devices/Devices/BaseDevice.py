@@ -46,7 +46,10 @@ class BaseDevice(object):
             # first write the column names
             f.write("Property,Value,Unit\n")
             for key in self.publish_prop:
-                prop = self.__dict__[key]
+                try:
+                    prop = self.__dict__[key]
+                except KeyError:
+                    prop = getattr(self, key)
                 # prop = self.publish_prop[key]
                 if isinstance(prop, Value):
                     f.write("%s,%s,%s\n" % (key, prop.magnitude, prop.unit))
