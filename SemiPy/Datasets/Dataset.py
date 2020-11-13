@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import warnings
 from SemiPy.helper.plotting import create_scatter_plot
+from SemiPy.helper.wordsimilarity import levenshtein
 from collections import OrderedDict
 
 
@@ -23,8 +24,12 @@ class BaseDataSet(object):
         Args:
             data_path (str or pd.DataFrame): Path to the csv, xls, or txt file or just the actual DataFrame
         """
+        self.data_path = data_path
         if isinstance(data_path, pd.DataFrame):
             self.df = data_path
+
+        elif isinstance(data_path, dict):
+            self.df = pd.DataFrame(data_path, dtype=np.object)
         else:
             assert isinstance(data_path, str), 'The datapth must of type string'
             assert os.path.exists(data_path), 'The datapath you gave {0} does not exist'.format(data_path)
@@ -82,11 +87,25 @@ class BaseDataSet(object):
 
         # loop through looking for subset names.  If two names work, then raise an error.  This could be adjusted later that it defaults
         # to the longer name
+        found_column = None
         for name in names:
             column_names = [col for col in self.df.columns if name.lower() in col.lower()]
             if len(column_names) != 0:
-                assert result is None, 'Two of the names given correspond to columns in the table'
+                if result is not None:
+                    # if found two words, use the one that has the highest similarity
+                    found = levenshtein(found_column, result[0])
+                    new = levenshtein(name, column_names[0])
+                    if found < new:
+                        warnings.warn('Two of the names given correspond to columns in the table.  Using {0} for {1} instead of {2} for {3}'.format(result[0], found_column, column_names[0], name))
+                        name = found_column
+                        column_names = result
+                    else:
+                        warnings.warn(
+                            'Two of the names given correspond to columns in the table.  Using {0} for {1} instead of {2} for {3}'.format(
+                                column_names[0], name, result[0], found_column))
+                # assert result is None, 'Two of the names given correspond to columns in the table'
                 result = column_names
+                found_column = name
 
         return result
 
@@ -289,34 +308,35 @@ class SetDataSet(BaseDataSet):
 
         super(SetDataSet, self).__init__(*args, **kwargs)
 
-        # now gather what the secondary independent values are for each set
-        if secondary_independent_values is None:
-            assert self._get_column_names(self.secondary_independent) is not None,\
-                'Cannot find the required column {0} in the dataset'.format(self.secondary_independent)
-            column_values = self.get_column(self.secondary_independent)[:, 0]
-        else:
-            num_sets = self.get_column(self.master_independent).shape[0]
-            assert num_sets == len(secondary_independent_values),\
-                'You provided {0} values for {1}, but there are {2} sets'.format(len(secondary_independent_values),
-                                                                                 self.secondary_independent, num_sets)
-            column_values = secondary_independent_values
-
-        self.secondary_indep_values = OrderedDict()
-
-        # loop through grabbing the values and ignoring any duplicates (always taking the first column)
-        index = 0
-        for i in range(len(column_values)):
-            if self.secondary_indep_values.get(column_values[i], None) is None and not np.isnan(column_values[i]):
-                # now add all the column names to the secondary_indep_values dict
-                self.secondary_indep_values[column_values[i]] =\
-                    [column[index] for column in self.gathered_column_names.values() if column is not None]
-                index += 1
-            # else remove all the data from that set
+        if self.data_path is not None:
+            # now gather what the secondary independent values are for each set
+            if secondary_independent_values is None:
+                assert self._get_column_names(self.secondary_independent) is not None,\
+                    'Cannot find the required column {0} in the dataset'.format(self.secondary_independent)
+                column_values = self.get_column(self.secondary_independent)[:, 0]
             else:
-                self.remove_column(column_name=[columns[index] for columns in self.gathered_column_names.values() if columns is not None])
+                num_sets = self.get_column(self.master_independent).shape[0]
+                assert num_sets == len(secondary_independent_values),\
+                    'You provided {0} values for {1}, but there are {2} sets'.format(len(secondary_independent_values),
+                                                                                     self.secondary_independent, num_sets)
+                column_values = secondary_independent_values
 
-        # count the number of sets
-        self.num_secondary_indep_sets = len(self.secondary_indep_values.keys())
+            self.secondary_indep_values = OrderedDict()
+
+            # loop through grabbing the values and ignoring any duplicates (always taking the first column)
+            index = 0
+            for i in range(len(column_values)):
+                if self.secondary_indep_values.get(column_values[i], None) is None and not np.isnan(column_values[i]):
+                    # now add all the column names to the secondary_indep_values dict
+                    self.secondary_indep_values[column_values[i]] =\
+                        [column[index] for column in self.gathered_column_names.values() if column is not None]
+                    index += 1
+                # else remove all the data from that set
+                else:
+                    self.remove_column(column_name=[columns[index] for columns in self.gathered_column_names.values() if columns is not None])
+
+            # count the number of sets
+            self.num_secondary_indep_sets = len(self.secondary_indep_values.keys())
 
     def __assert_secondary_value(self, value):
         assert value in self.secondary_indep_values.keys(),\

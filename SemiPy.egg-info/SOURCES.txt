@@ -92,3 +92,4 @@ SemiPy/helper/__init__.py
 SemiPy/helper/math.py
 SemiPy/helper/paths.py
 SemiPy/helper/plotting.py
+SemiPy/helper/wordsimilarity.py

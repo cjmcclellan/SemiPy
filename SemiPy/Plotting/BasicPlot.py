@@ -2,7 +2,7 @@
 Basic plot class
 """
 import matplotlib.pyplot as plt
-from physics.value import Value, ureg
+from physics.value import Value, ureg, pint_to_str
 import os
 
 
@@ -16,7 +16,7 @@ class BasicPlot(object):
     y_axis_scale = 'linear'
     y_units = None
 
-    def __init__(self, name, x_units=None, y_units=None):
+    def __init__(self, name, x_units=None, y_units=None, *args, **kwargs):
 
         # save the name
         self.name = name
@@ -28,7 +28,7 @@ class BasicPlot(object):
             self.y_units = y_units
 
         # create the Figure
-        self.fig = plt.figure()
+        self.fig = plt.figure(*args, **kwargs)
 
     def add_data(self, x_data, y_data, *args, **kwargs):
 
@@ -61,7 +61,7 @@ class BasicPlot(object):
     @staticmethod
     def _add_unit_to_title(title, unit):
         if unit is not None:
-            return title + ' ({0})'.format(unit)
+            return title + ' ({0})'.format(pint_to_str(unit))
         else:
             return title
 

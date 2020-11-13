@@ -13,7 +13,7 @@ from physics.fundamental_constants import free_space_permittivity_F_div_cm
 from physics.fundamental_constants import electron_charge_C
 import matplotlib.pyplot as plt
 from SemiPy.Devices.Interfaces.Interface import import_interface
-from SemiPy.Datasets.IVDataset import IdVdDataSet
+from SemiPy.Datasets.IVDataset import IdVdDataSet, IdVgDataSet
 import scipy.constants
 from dash_cjm.plots.Basic import BasicPlot
 
@@ -333,7 +333,7 @@ class Stanford2DSModel(BaseModel):
         # plt.show()
 
     def model_output(self, Vds, Vgs, heating=True, vsat=True, diffusion=True, drift=True,
-                     ambient_temperature=None, iterations=2, linestyle='-'):
+                     ambient_temperature=None, iterations=2, linestyle='-', IdVd=True):
         mobility_temp = Value(295, ureg.kelvin)
         if ambient_temperature is None:
             ambient_temperature = Value(295, ureg.kelvin)
@@ -352,24 +352,38 @@ class Stanford2DSModel(BaseModel):
         #     'Your starting field should be less than 0.25 V /um, yours is {0}'.format(Vds.range[0] / self.FET.length)
 
         # create a holder for the data
-        idvd_data = {}
-        for vg in Vgs:
-            idvd_data['Id_{0}'.format(vg)] = []
-            idvd_data['T_{0}'.format(vg)] = []
-            idvd_data['Add_{0}'.format(vg)] = []
-            idvd_data['vsat_{0}'.format(vg)] = []
-            idvd_data['Vgs_{0}'.format(vg)] = []
-            idvd_data['n_{0}'.format(vg)] = []
-        idvd_data['Vds'] = Vds
+        if IdVd:
+            dataset = IdVdDataSet
+            master_independent = Vds
+            secondary_independent = Vgs
+        else:
+            dataset = IdVgDataSet
+            master_independent = Vgs
+            secondary_independent = Vds
+
+        id_data = {}
+        for i_vg in range(len(secondary_independent.range)):
+            id_data['id({0})'.format(i_vg)] = []
+            id_data['T({0})'.format(i_vg)] = []
+            id_data['vsat({0})'.format(i_vg)] = []
+            id_data['vgs({0})'.format(i_vg)] = []
+            id_data['n({0})'.format(i_vg)] = []
+            id_data['vds({0})'.format(i_vg)] = []
 
         # now loop through the Vgs values
-        for vgs in Vgs:
+        for i_vgs, vgs in enumerate(Vgs):
             # first calculate an initial Id
             prev_Id = Value(0.0, ureg.amp)
             # prev_Id = self.compute_drift_current(Vds.range[0], self.FET.max_mobility, Vgs.range[0], prev_Id)
             effective_mobility = self.FET.max_mobility
             # now loop through each Vds value
-            for vds in Vds:
+            for i_vds, vds in enumerate(Vds):
+
+                if IdVd:
+                    i_master = i_vgs
+                else:
+                    i_master = i_vds
+
                 # for i in range(iterations):
                 # vds = self.compute_vds_rc(vds, prev_Id)
                 power = self.compute_power(vds, vgs, effective_mobility, prev_Id)
@@ -387,7 +401,7 @@ class Stanford2DSModel(BaseModel):
 
                 if vsat:
                     effective_mobility, vsat = self.compute_mobility_velocity_saturation(effective_mobility, vds, temperature)
-                    idvd_data['vsat_{0}'.format(vgs)].append(vsat)
+                    id_data['vsat({0})'.format(i_master)].append(vsat)
 
                 # now calculate the new current
                 new_Id = Value(0.0, ureg.amp)
@@ -399,13 +413,14 @@ class Stanford2DSModel(BaseModel):
                     new_Id += self.compute_diffusion_current(temperature, vgs, vds)
 
                 # idvd_data['Vg = {0}'.format(vgs)].append([])
-                idvd_data['Id_{0}'.format(vgs)].append(new_Id / self.FET.width)
+                id_data['id({0})'.format(i_master)].append(new_Id / self.FET.width)
 
                 prev_Id = new_Id
-                idvd_data['T_{0}'.format(vgs)].append(temperature)
-                idvd_data['n_{0}'.format(vgs)].append(self.FET.vg_to_n(vgs))
-                idvd_data['Vgs_{0}'.format(vgs)].append(vgs)
+                id_data['T({0})'.format(i_master)].append(temperature)
+                id_data['n({0})'.format(i_master)].append(self.FET.vg_to_n(vgs))
+                id_data['vgs({0})'.format(i_master)].append(vgs)
+                id_data['vds({0})'.format(i_master)].append(vds)
 
 
-        return idvd_data
+        return dataset(data_path=id_data)
 

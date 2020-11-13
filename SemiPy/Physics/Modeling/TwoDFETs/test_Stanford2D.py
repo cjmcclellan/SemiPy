@@ -42,47 +42,51 @@ class Test2DFETModels(unittest.TestCase):
 
         S2DModel = Stanford2DSModel(FET=fet)
 
-        Vds = ModelInput(0.0, 10.0, num=40, unit=ureg.volt)
+        Vds = ModelInput(0.0, 10.0, num=5, unit=ureg.volt)
 
-        Vgs = ModelInput(-9.0, 30.0, num=5, unit=ureg.volt)
+        Vgs = ModelInput(-12.0, 30.0, num=40, unit=ureg.volt)
 
         ambient_temperature = Value(300, ureg.kelvin)
 
 
         # plot = IdVdPlot('IdVg')
-        fig = plt.figure(dpi=160)
-        ax = fig.gca()
-        I_units = '\u03BCA/\u03BCm'
-        colors = ['C0', 'C2', 'C3', 'C4', 'C5', 'C6']
-        linestyle = '-'
-        plt.rc('xtick', labelsize=12)  # fontsize of the tick labels
-        plt.rc('ytick', labelsize=12)
+        # fig = plt.figure(dpi=160)
+        # ax = fig.gca()
+        # I_units = '\u03BCA/\u03BCm'
+        # colors = ['C0', 'C2', 'C3', 'C4', 'C5', 'C6']
+        # linestyle = '-'
+        # plt.rc('xtick', labelsize=12)  # fontsize of the tick labels
+        # plt.rc('ytick', labelsize=12)
         # ax.axes.get_xaxis().set_ticks([])
         # ax.axes.get_yaxis().set_ticks([])
 
         # now compute the model output with self-heating
         idvd_data = S2DModel.model_output(Vds, Vgs, heating=True, vsat=True, diffusion=False, drift=True,
-                                   ambient_temperature=ambient_temperature)
+                                   ambient_temperature=ambient_temperature, IdVd=False)
 
-        for i_vg, vgs in enumerate(Vgs.range):
-            plt.plot(idvd_data['Vds'].range, [i * 1e9 for i in idvd_data['Id_{0}'.format(vgs)]], colors[i_vg] + linestyle,
-                     label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), linewidth=4)
+        idvd_plot = IdVgPlot(name='IdVd', dpi=160)
+        idvd_plot.add_idvg_dataset(idvd_data)
+        idvd_plot.show_plot()
 
-
-        # set the channel vsat to 7e6 cm/s
-        fet.channel.saturation_velocity.set(Value(7e6, ureg.centimeter / ureg.seconds), input_values={'temperature': Value(300, ureg.kelvin)})
-
-        S2DModel = Stanford2DSModel(FET=fet)
-
-        # # now compute the model output without self-heating
-        idvd_data = S2DModel.model_output(Vds, Vgs, heating=False, vsat=True, diffusion=False, drift=True,
-                                          ambient_temperature=ambient_temperature)
-        linestyle = '--'
-        for i_vg, vgs in enumerate(Vgs.range):
-            plt.plot(idvd_data['Vds'].range, [i * 1e9 for i in idvd_data['Id_{0}'.format(vgs)]], colors[i_vg] + linestyle,
-                     label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), linewidth=4)
+        # for i_vg, vgs in enumerate(Vgs.range):
+        #     plt.plot(idvd_data['Vds'].range, [i * 1e9 for i in idvd_data['Id_{0}'.format(vgs)]], colors[i_vg] + linestyle,
+        #              label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), linewidth=4)
+        #
+        #
+        # # set the channel vsat to 7e6 cm/s
+        # fet.channel.saturation_velocity.set(Value(7e6, ureg.centimeter / ureg.seconds), input_values={'temperature': Value(300, ureg.kelvin)})
+        #
+        # S2DModel = Stanford2DSModel(FET=fet)
+        #
+        # # # now compute the model output without self-heating
+        # idvd_data = S2DModel.model_output(Vds, Vgs, heating=False, vsat=True, diffusion=False, drift=True,
+        #                                   ambient_temperature=ambient_temperature)
+        # linestyle = '--'
+        # for i_vg, vgs in enumerate(Vgs.range):
+        #     plt.plot(idvd_data['Vds'].range, [i * 1e9 for i in idvd_data['Id_{0}'.format(vgs)]], colors[i_vg] + linestyle,
+        #              label='Vgs = {0} V'.format(math.floor(vgs * 10) / 10), linewidth=4)
 
         # plt.title('$MoS_2$ FET at {0} C'.format(int(ambient_temperature) - 270), fontsize=20)
         # plt.xlabel('$V_D$$_S$ (V)', fontsize=16)
         # plt.ylabel('$I_D$ ({0})'.format(I_units), fontsize=16)
-        plt.show()
+        # plt.show()

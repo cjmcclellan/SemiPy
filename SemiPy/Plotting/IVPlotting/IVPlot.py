@@ -2,7 +2,7 @@
 IV Plotting Classes
 """
 from SemiPy.Plotting.BasicPlot import BasicPlot
-from SemiPy.Datasets.IVDataset import IdVdDataSet
+from SemiPy.Datasets.IVDataset import IdVdDataSet, IdVgDataSet
 from physics.value import Value, ureg, pint_to_str
 import matplotlib.pyplot as plt
 
@@ -20,8 +20,18 @@ class IdVgPlot(BasicPlot):
     def __init__(self, *args, **kwargs):
 
         super(IdVgPlot, self).__init__(*args, **kwargs)
-    #
-    # def
+
+    def add_idvg_dataset(self, dataset, *args, **kwargs):
+
+        assert isinstance(dataset, IdVgDataSet), 'You must pass an IdVgDataSet class for IdVgPlots, not {0}'.format(type(dataset))
+
+        # get the Vg values
+        Vd_values = dataset.get_secondary_indep_values()
+        Vg = dataset.get_column(dataset.master_independent)[0]
+
+        for Vd in Vd_values:
+            self.add_data(Vg, dataset.get_column_set('id', Vd), *args, **kwargs)
+
 
 
 class IdVdPlot(BasicPlot):
