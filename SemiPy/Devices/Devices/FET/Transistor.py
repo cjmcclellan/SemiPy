@@ -8,6 +8,7 @@ from SemiPy.Devices.PhysicalProperty import CustomPhysicalProperty
 # from SemiPy.Devices.Materials.Properties.Interfaces.Electrical import ElectricalContactResistance
 # from SemiPy.Devices.Materials.Properties.Interfaces.Thermal import ThermalBoundaryConductance
 from SemiPy.Devices.Materials.BaseMaterial import Semiconductor
+from SemiPy.Devices.Devices.Defects.Traps import Trap
 from physics.helper import assert_value
 from physics.units import ureg
 from physics.value import Value
@@ -43,6 +44,16 @@ class Transistor(BaseDevice):
         # save the channel material
         assert isinstance(channel, Semiconductor), 'The channel material must be a semiconductor'
         self.channel = channel
+
+        # a transistor can also have traps
+        self._traps = []
+
+    @property
+    def traps(self):
+        return self._traps
+
+    def add_trap(self, Eit, Dit, ntype=True):
+        self._traps.append(Trap(Eit=Eit, Dit=Dit, ntype=ntype))
 
 
 class FET(Transistor):

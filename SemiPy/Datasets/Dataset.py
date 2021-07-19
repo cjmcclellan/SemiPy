@@ -29,6 +29,11 @@ class BaseDataSet(object):
             self.df = data_path
 
         elif isinstance(data_path, dict):
+            # remove any empty entries
+            keys = list(data_path.keys())
+            for key in keys:
+                if len(data_path[key]) == 0:
+                    data_path.pop(key)
             self.df = pd.DataFrame(data_path, dtype=np.object)
         else:
             assert isinstance(data_path, str), 'The datapth must of type string'

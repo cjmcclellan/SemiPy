@@ -30,6 +30,9 @@ class Test2DFETModels(unittest.TestCase):
         fet = TFT(channel=channel, gate_oxide=gate_oxide, length=Value(400, ureg.nanometer),
                   width=Value(2000, ureg.nanometer), substrate=substrate)
 
+
+        # add trap levels in 
+
         fet.Vt_avg.set(Value(-10.0, ureg.volt))
 
         fet.Rc.set(Value(2000.0, ureg.ohm * ureg.micrometer),
